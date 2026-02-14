@@ -14,7 +14,8 @@ import ReactFlow, {
   NodeChange,
   ReactFlowProvider,
   Panel,
-  MarkerType
+  MarkerType,
+  useReactFlow
 } from 'reactflow';
 import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -57,21 +58,74 @@ const DEFAULT_APPEARANCE: AppearanceSettings = {
   contentFontSize: 'sm'
 };
 
-const STORAGE_KEY = 'blueprint_x_appearance';
+const PROJECT_STORAGE_KEY = 'blueprint_x_project_v1';
+const APPEARANCE_STORAGE_KEY = 'blueprint_x_appearance_v1';
 
 function BlueprintStudio() {
-  const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [settings, setSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS);
-  
-  // Appearance Settings (Persisted locally)
-  const [appearance, setAppearance] = useState<AppearanceSettings>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_APPEARANCE;
+  const { setViewport } = useReactFlow();
+
+  // Project Data Persistence (Nodes, Edges, Styles)
+  const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.nodes || [];
+      } catch (e) {
+        console.error("Failed to parse saved nodes", e);
+      }
+    }
+    return [];
   });
 
+  const [edges, setEdges] = useState<Edge[]>(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.edges || [];
+      } catch (e) {
+        console.error("Failed to parse saved edges", e);
+      }
+    }
+    return [];
+  });
+
+  const [settings, setSettings] = useState<GlobalSettings>(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.settings || DEFAULT_SETTINGS;
+      } catch (e) {
+        console.error("Failed to parse saved settings", e);
+      }
+    }
+    return DEFAULT_SETTINGS;
+  });
+
+  // Appearance Settings Persistence
+  const [appearance, setAppearance] = useState<AppearanceSettings>(() => {
+    const saved = localStorage.getItem(APPEARANCE_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved appearance", e);
+      }
+    }
+    return DEFAULT_APPEARANCE;
+  });
+
+  // Effect to save project state whenever nodes, edges, or settings change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appearance));
+    const projectData = { nodes, edges, settings };
+    localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(projectData));
+  }, [nodes, edges, settings]);
+
+  // Effect to save appearance settings
+  useEffect(() => {
+    localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(appearance));
   }, [appearance]);
 
   const [editingNode, setEditingNode] = useState<string | null>(null);
@@ -82,8 +136,13 @@ function BlueprintStudio() {
   // Translation helper
   const t = (key: keyof typeof translations.en) => translations[appearance.language][key] || key;
 
-  const onNodesChange = useCallback((changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
-  const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    setNodes((nds) => applyNodeChanges(changes, nds));
+  }, []);
+
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+  }, []);
   
   const onConnect = useCallback((params: Connection) => {
     const defaultType = settings.connectionTypes[0];
@@ -160,25 +219,31 @@ function BlueprintStudio() {
       const tableCats = workbook.Sheets["TableCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["TableCategories"]) as TableCategory[] : settings.tableCategories;
       const logicCats = workbook.Sheets["LogicCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["LogicCategories"]) as LogicCategory[] : settings.logicCategories;
       const connTypes = workbook.Sheets["ConnectionTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ConnectionTypes"]) as ConnectionType[] : settings.connectionTypes;
-      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes });
-      const nodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
-      setNodes(nodesRaw.map(n => ({
+      
+      const importedNodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
+      const importedNodes = importedNodesRaw.map(n => ({
         id: String(n.ID), type: 'blueprintNode', position: { x: Number(n.X), y: Number(n.Y) },
         data: {
           label: n.Label, cardType: n.Type, categoryId: n.CatID,
           columns: n.Columns ? n.Columns.split('|').map((name: string, i: number) => ({ id: String(i), name })) : [],
           description: n.Desc, bulletPoints: n.Bullets ? n.Bullets.split('|') : []
         }
-      })));
-      const edgesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Edges"]) as any[];
-      setEdges(edgesRaw.map(e => {
+      }));
+
+      const importedEdgesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Edges"]) as any[];
+      const importedEdges = importedEdgesRaw.map(e => {
         const cType = connTypes.find(t => t.id === e.TypeID);
         return {
           id: String(e.ID), source: String(e.Source), target: String(e.Target), label: e.Label, type: 'blueprintEdge',
           data: { typeId: e.TypeID },
           markerEnd: e.HasArrow === 'YES' ? { type: MarkerType.ArrowClosed, color: cType?.color || '#94a3b8' } : undefined
         };
-      }));
+      });
+
+      // Update state which will trigger localStorage sync
+      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes });
+      setNodes(importedNodes);
+      setEdges(importedEdges);
     };
     reader.readAsBinaryString(file);
   };
