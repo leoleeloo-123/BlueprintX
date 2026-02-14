@@ -416,7 +416,10 @@ function BlueprintStudio() {
           fitView
           fitViewOptions={{ padding: 0.2 }}
           className="bg-transparent"
-          defaultEdgeOptions={{ type: 'blueprintEdge' }}
+          defaultEdgeOptions={{ 
+            type: 'blueprintEdge',
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' }
+          }}
         >
           <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
           <Controls position="bottom-right" />

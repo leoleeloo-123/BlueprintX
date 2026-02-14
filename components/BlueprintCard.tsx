@@ -35,12 +35,28 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
     ? data.settings?.dataSources.find(s => s.id === data.dataSourceId)?.name 
     : null;
 
+  // CSS classes for handles that hide by default and show on card hover or selection
+  const handleClasses = `!w-2.5 !h-2.5 !bg-slate-400 !border-2 !border-white transition-opacity duration-200 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
+
   return (
-    <div className={`min-w-[220px] max-w-[320px] rounded-xl overflow-hidden border shadow-sm transition-all duration-200 bg-white ${theme.border}`}>
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2" />
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2" />
-      <Handle type="target" position={Position.Top} className="!w-2 !h-2" />
-      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2" />
+    <div className={`group min-w-[220px] max-w-[320px] rounded-xl overflow-hidden border shadow-sm transition-all duration-200 bg-white ${theme.border}`}>
+      {/* Universal Handles: Top, Right, Bottom, Left each support both source and target connections */}
+      
+      {/* Top Handles */}
+      <Handle type="target" position={Position.Top} id="t-t" className={handleClasses} />
+      <Handle type="source" position={Position.Top} id="t-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
+      
+      {/* Bottom Handles */}
+      <Handle type="target" position={Position.Bottom} id="b-t" className={handleClasses} />
+      <Handle type="source" position={Position.Bottom} id="b-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
+      
+      {/* Left Handles */}
+      <Handle type="target" position={Position.Left} id="l-t" className={handleClasses} />
+      <Handle type="source" position={Position.Left} id="l-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
+      
+      {/* Right Handles */}
+      <Handle type="target" position={Position.Right} id="r-t" className={handleClasses} />
+      <Handle type="source" position={Position.Right} id="r-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
 
       <div style={{ backgroundColor: headerColor }} className="p-3 flex items-center justify-between text-white gap-3 transition-colors duration-300">
         <div className="flex items-center gap-2 overflow-hidden">
@@ -76,7 +92,7 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
               {data.columns?.map(col => {
                 const fType = data.settings?.fieldTypes.find(ft => ft.id === col.typeId);
                 return (
-                  <div key={col.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 rounded-md transition-colors group">
+                  <div key={col.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 rounded-md transition-colors group/row">
                     <div className="flex-shrink-0 flex items-center justify-center">
                       {col.isKey ? (
                         <Key size={10} className="text-amber-500" />
