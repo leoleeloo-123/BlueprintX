@@ -1,8 +1,7 @@
-
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Trash2, Edit3, Database, FileText, BarChart2 } from 'lucide-react';
-import { NodeData, NodeCardType } from '../types';
+import { NodeData, NodeCardType } from '../types.ts';
 
 export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData>) => {
   const isTable = data.cardType === NodeCardType.TABLE;

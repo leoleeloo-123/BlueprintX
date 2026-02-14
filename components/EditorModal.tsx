@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { X, Plus, Trash2, Database, FileText, BarChart2 } from 'lucide-react';
-import { Node, NodeProps } from 'reactflow';
-import { NodeData, NodeCardType, TableColumn } from '../types';
+import { Node } from 'reactflow';
+import { NodeData, NodeCardType, TableColumn } from '../types.ts';
 
 interface EditorModalProps {
   node: Node<NodeData>;

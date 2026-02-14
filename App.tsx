@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import ReactFlow, { 
   Background, 
@@ -19,11 +18,11 @@ import ReactFlow, {
 import { Download, Upload, Plus, FileSpreadsheet, Layers, Settings2, Info } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { NodeCardType, NodeData } from './types';
-import { BlueprintCard } from './components/BlueprintCard';
-import { BlueprintEdge } from './components/BlueprintEdge';
-import { EditorModal } from './components/EditorModal';
-import { EdgeEditorModal } from './components/EdgeEditorModal';
+import { NodeCardType, NodeData } from './types.ts';
+import { BlueprintCard } from './components/BlueprintCard.tsx';
+import { BlueprintEdge } from './components/BlueprintEdge.tsx';
+import { EditorModal } from './components/EditorModal.tsx';
+import { EdgeEditorModal } from './components/EdgeEditorModal.tsx';
 
 const nodeTypes = {
   blueprintNode: BlueprintCard,
