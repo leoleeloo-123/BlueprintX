@@ -56,7 +56,13 @@ export const translations = {
     select_source: "Select Source",
     none: "None",
     user_name: "User Name",
-    org_name: "Organization Name"
+    org_name: "Organization Name",
+    field_type: "Field Type",
+    key_field: "Key Field",
+    manage_field_types: "Manage Field Types",
+    new_field_type: "New Field Type",
+    reset_canvas: "Reset Canvas",
+    reset_confirm: "Are you sure you want to clear all items? This action cannot be undone."
   },
   zh: {
     studio_canvas: "画布组件",
@@ -114,6 +120,12 @@ export const translations = {
     select_source: "选择来源",
     none: "无",
     user_name: "用户名",
-    org_name: "组织机构"
+    org_name: "组织机构",
+    field_type: "字段类型",
+    key_field: "关键列",
+    manage_field_types: "管理字段类型",
+    new_field_type: "新字段类型",
+    reset_canvas: "重置画布",
+    reset_confirm: "您确定要清空所有内容吗？此操作无法撤销。"
   }
 };

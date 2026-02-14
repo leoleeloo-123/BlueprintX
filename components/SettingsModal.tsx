@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Palette, Link2, Layout, FileText, Database } from 'lucide-react';
-import { GlobalSettings, TableCategory, ConnectionType, LogicCategory, DataSource } from '../types.ts';
+import { X, Plus, Trash2, Palette, Link2, Layout, FileText, Database, Type } from 'lucide-react';
+import { GlobalSettings, TableCategory, ConnectionType, LogicCategory, DataSource, FieldType } from '../types.ts';
 import { translations } from '../translations.ts';
 
 interface SettingsModalProps {
@@ -54,6 +54,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
     setLocalSettings(prev => ({ ...prev, dataSources: [...prev.dataSources, newSrc] }));
   };
 
+  const addFieldType = () => {
+    const newType: FieldType = {
+      id: `ft-${Date.now()}`,
+      name: t('new_field_type')
+    };
+    setLocalSettings(prev => ({ ...prev, fieldTypes: [...prev.fieldTypes, newType] }));
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
@@ -75,8 +83,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
           <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
             {activeTab === 'tables' && (
               <div className="space-y-8">
+                {/* Table Categories */}
                 <div>
-                  <div className="flex items-center justify-between mb-2"><h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('table_categories')}</h3><button onClick={addTableCategory} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1"><Plus size={14} /> {t('add_field')}</button></div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('table_categories')}</h3>
+                    <button onClick={addTableCategory} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                      <Plus size={14} /> {t('add_field')}
+                    </button>
+                  </div>
                   <div className="space-y-2">
                     {localSettings.tableCategories.map((cat, idx) => (
                       <div key={cat.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">
@@ -88,8 +102,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
                   </div>
                 </div>
 
+                {/* Field Types */}
                 <div className="pt-6 border-t border-slate-100">
-                  <div className="flex items-center justify-between mb-2"><h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('manage_data_sources')}</h3><button onClick={addDataSource} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1"><Plus size={14} /> {t('add_field')}</button></div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('manage_field_types')}</h3>
+                    <button onClick={addFieldType} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                      <Plus size={14} /> {t('add_field')}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {localSettings.fieldTypes.map((ft, idx) => (
+                      <div key={ft.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">
+                        <div className="p-1.5 bg-slate-50 rounded text-slate-400"><Type size={14} /></div>
+                        <input type="text" value={ft.name} onChange={e => { const updated = [...localSettings.fieldTypes]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, fieldTypes: updated }); }} className="flex-1 bg-transparent text-sm font-medium focus:ring-0 border-0 p-0" />
+                        <button onClick={() => setLocalSettings(p => ({ ...p, fieldTypes: p.fieldTypes.filter(s => s.id !== ft.id)}))} className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Data Sources */}
+                <div className="pt-6 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('manage_data_sources')}</h3>
+                    <button onClick={addDataSource} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                      <Plus size={14} /> {t('add_field')}
+                    </button>
+                  </div>
                   <div className="space-y-2">
                     {localSettings.dataSources.map((src, idx) => (
                       <div key={src.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">

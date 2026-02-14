@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Tag, Database, MessageSquare } from 'lucide-react';
+import { X, Plus, Trash2, Tag, Database, MessageSquare, Key } from 'lucide-react';
 import { Node } from 'reactflow';
 import { NodeData, NodeCardType, TableColumn, GlobalSettings } from '../types.ts';
 import { translations } from '../translations.ts';
@@ -37,7 +37,7 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h2 className="text-lg font-bold text-slate-800 tracking-tight">{t('node_properties')}</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={20} /></button>
@@ -88,12 +88,51 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
           <div className="pt-6 border-t border-slate-100">
             {isTable ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700">{t('fields_schema')}</span><button onClick={() => setColumns([...columns, { id: Date.now().toString(), name: 'New Field' }])} className="text-xs font-bold text-blue-600 flex items-center gap-1"><Plus size={14} /> {t('add_field')}</button></div>
-                <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-700">{t('fields_schema')}</span>
+                  <button onClick={() => setColumns([...columns, { id: Date.now().toString(), name: 'New Field', isKey: false }])} className="text-xs font-bold text-blue-600 flex items-center gap-1">
+                    <Plus size={14} /> {t('add_field')}
+                  </button>
+                </div>
+                <div className="space-y-3">
                   {columns.map(col => (
-                    <div key={col.id} className="flex gap-2">
-                      <input type="text" value={col.name} onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, name: e.target.value } : c))} className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold uppercase tracking-tight" />
-                      <button onClick={() => setColumns(columns.filter(c => c.id !== col.id))} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={14} /></button>
+                    <div key={col.id} className="flex flex-wrap items-center gap-2 p-3 bg-slate-50/50 border border-slate-100 rounded-xl group transition-all hover:bg-white hover:shadow-sm">
+                      <div className="flex-1 min-w-[150px]">
+                        <input 
+                          type="text" 
+                          value={col.name} 
+                          onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, name: e.target.value } : c))} 
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold uppercase tracking-tight focus:ring-2 focus:ring-blue-500 outline-none" 
+                        />
+                      </div>
+                      <div className="w-32">
+                        <select 
+                          value={col.typeId || ''} 
+                          onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, typeId: e.target.value || undefined } : c))}
+                          className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">{t('none')}</option>
+                          {settings.fieldTypes.map(ft => (
+                            <option key={ft.id} value={ft.id}>{ft.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-lg">
+                        <input 
+                          type="checkbox" 
+                          id={`key-${col.id}`}
+                          checked={col.isKey} 
+                          onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, isKey: e.target.checked } : c))}
+                          className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor={`key-${col.id}`} className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1 cursor-pointer select-none">
+                          <Key size={10} className={col.isKey ? 'text-amber-500' : 'text-slate-300'} />
+                          {t('key_field')}
+                        </label>
+                      </div>
+                      <button onClick={() => setColumns(columns.filter(c => c.id !== col.id))} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>

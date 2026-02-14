@@ -16,10 +16,10 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource } from './types.ts';
+import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType } from './types.ts';
 import { translations } from './translations.ts';
 import { BlueprintCard } from './components/BlueprintCard.tsx';
 import { BlueprintEdge } from './components/BlueprintEdge.tsx';
@@ -52,6 +52,12 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     { id: 'src-erp', name: 'ERP Data' },
     { id: 'src-xls', name: 'Excel Data' },
     { id: 'src-sql', name: 'Database' }
+  ],
+  fieldTypes: [
+    { id: 'ft-text', name: 'Text' },
+    { id: 'ft-number', name: 'Number' },
+    { id: 'ft-date', name: 'Date' },
+    { id: 'ft-bool', name: 'Boolean' }
   ]
 };
 
@@ -104,7 +110,7 @@ function BlueprintStudio() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return parsed.settings || DEFAULT_SETTINGS;
+        return { ...DEFAULT_SETTINGS, ...parsed.settings } || DEFAULT_SETTINGS;
       } catch (e) {
         console.error("Failed to parse saved settings", e);
       }
@@ -199,6 +205,14 @@ function BlueprintStudio() {
     fitView({ padding: 0.2, duration: 800 });
   }, [fitView]);
 
+  const handleResetCanvas = useCallback(() => {
+    if (window.confirm(t('reset_confirm'))) {
+      setNodes([]);
+      setEdges([]);
+      hasPerformedInitialFit.current = false;
+    }
+  }, [t]);
+
   const addNode = (type: NodeCardType) => {
     const id = Date.now().toString();
     let defaultCatId = undefined;
@@ -216,7 +230,7 @@ function BlueprintStudio() {
         label: `New ${type.toLowerCase()}`, 
         cardType: type,
         categoryId: defaultCatId,
-        columns: type === NodeCardType.TABLE ? [{ id: '1', name: 'New Field' }] : [],
+        columns: type === NodeCardType.TABLE ? [{ id: '1', name: 'New Field', isKey: false }] : [],
         description: '',
         bulletPoints: [],
         comment: '',
@@ -228,10 +242,17 @@ function BlueprintStudio() {
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(nodes.map(n => ({
-      ID: n.id, Label: n.data.label, Type: n.data.cardType, CatID: n.data.categoryId || '',
-      X: n.position.x, Y: n.position.y, Columns: n.data.columns?.map(c => c.name).join('|') || '',
-      Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || '',
-      Comment: n.data.comment || '', DataSourceID: n.data.dataSourceId || ''
+      ID: n.id, 
+      Label: n.data.label, 
+      Type: n.data.cardType, 
+      CatID: n.data.categoryId || '',
+      X: n.position.x, 
+      Y: n.position.y, 
+      Columns: n.data.columns?.map(c => `${c.name}:${c.typeId || ''}:${c.isKey ? 'K' : ''}`).join('|') || '',
+      Desc: n.data.description || '', 
+      Bullets: n.data.bulletPoints?.join('|') || '',
+      Comment: n.data.comment || '', 
+      DataSourceID: n.data.dataSourceId || ''
     }))), "Nodes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(edges.map(e => ({
       ID: e.id, Source: e.source, Target: e.target, Label: e.label || '', TypeID: e.data?.typeId || '', HasArrow: e.markerEnd ? 'YES' : 'NO'
@@ -240,8 +261,9 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.connectionTypes), "ConnectionTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
 
-    // Construct filename: BlueprintX_organization name_user name_YY-MM-DD_HHMM.xlsx
+    // Construct filename
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -267,13 +289,17 @@ function BlueprintStudio() {
       const logicCats = workbook.Sheets["LogicCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["LogicCategories"]) as LogicCategory[] : settings.logicCategories;
       const connTypes = workbook.Sheets["ConnectionTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ConnectionTypes"]) as ConnectionType[] : settings.connectionTypes;
       const dataSources = workbook.Sheets["DataSources"] ? XLSX.utils.sheet_to_json(workbook.Sheets["DataSources"]) as DataSource[] : settings.dataSources;
+      const fTypes = workbook.Sheets["FieldTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["FieldTypes"]) as FieldType[] : settings.fieldTypes;
       
       const importedNodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
       const importedNodes = importedNodesRaw.map(n => ({
         id: String(n.ID), type: 'blueprintNode', position: { x: Number(n.X), y: Number(n.Y) },
         data: {
           label: n.Label, cardType: n.Type, categoryId: n.CatID,
-          columns: n.Columns ? n.Columns.split('|').map((name: string, i: number) => ({ id: String(i), name })) : [],
+          columns: n.Columns ? n.Columns.split('|').map((colStr: string, i: number) => {
+            const [name, typeId, key] = colStr.split(':');
+            return { id: String(i), name, typeId: typeId || undefined, isKey: key === 'K' };
+          }) : [],
           description: n.Desc, bulletPoints: n.Bullets ? n.Bullets.split('|') : [],
           comment: n.Comment || '', dataSourceId: n.DataSourceID || ''
         }
@@ -290,7 +316,13 @@ function BlueprintStudio() {
       });
 
       // Update state which will trigger localStorage sync
-      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes, dataSources: dataSources });
+      setSettings({ 
+        tableCategories: tableCats, 
+        logicCategories: logicCats, 
+        connectionTypes: connTypes, 
+        dataSources: dataSources,
+        fieldTypes: fTypes
+      });
       setNodes(importedNodes);
       setEdges(importedEdges);
       
@@ -366,6 +398,9 @@ function BlueprintStudio() {
             <Upload size={14} /> {t('import_xlsx')}
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
           </label>
+          <button onClick={handleResetCanvas} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-red-50 border border-red-100 text-red-600 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all font-semibold text-xs">
+            <Trash2 size={14} /> {t('reset_canvas')}
+          </button>
         </div>
       </aside>
 

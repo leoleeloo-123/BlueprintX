@@ -17,9 +17,16 @@ export interface AppearanceSettings {
   isLegendExpanded: boolean;
 }
 
+export interface FieldType {
+  id: string;
+  name: string;
+}
+
 export interface TableColumn {
   id: string;
   name: string;
+  typeId?: string;
+  isKey?: boolean;
 }
 
 export interface TableCategory {
@@ -78,6 +85,7 @@ export interface GlobalSettings {
   logicCategories: LogicCategory[];
   connectionTypes: ConnectionType[];
   dataSources: DataSource[]; // New global management for data sources
+  fieldTypes: FieldType[]; // New global management for field types
 }
 
 export interface BlueprintProject {
