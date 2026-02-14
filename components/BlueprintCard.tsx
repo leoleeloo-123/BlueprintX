@@ -25,6 +25,10 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   const headerFontSizeClass = HEADER_SIZES[appearance?.headerFontSize || 'sm'];
   const contentFontSizeClass = CONTENT_SIZES[appearance?.contentFontSize || 'sm'];
 
+  // Filtering Logic
+  const isFiltered = data.activeCategoryFilter && data.categoryId !== data.activeCategoryFilter;
+  const cardOpacityClass = isFiltered ? 'opacity-20 saturate-50' : 'opacity-100';
+
   const theme = {
     border: selected ? 'border-slate-900 ring-2 ring-slate-100' : 'border-slate-100',
     icon: isTable ? <Database size={14} /> : (isLogic ? <FileText size={14} /> : <BarChart2 size={14} />),
@@ -35,26 +39,17 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
     ? data.settings?.dataSources.find(s => s.id === data.dataSourceId)?.name 
     : null;
 
-  // CSS classes for handles that hide by default and show on card hover or selection
-  const handleClasses = `!w-2.5 !h-2.5 !bg-slate-400 !border-2 !border-white transition-opacity duration-200 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
+  const handleClasses = `!w-4 !h-4 !bg-slate-400 !border-2 !border-white shadow-sm transition-all duration-200 hover:scale-125 hover:!bg-blue-500 z-50 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
 
   return (
-    <div className={`group min-w-[220px] max-w-[320px] rounded-xl overflow-hidden border shadow-sm transition-all duration-200 bg-white ${theme.border}`}>
-      {/* Universal Handles: Top, Right, Bottom, Left each support both source and target connections */}
-      
-      {/* Top Handles */}
+    <div className={`group min-w-[220px] max-w-[320px] rounded-xl overflow-hidden border shadow-sm transition-all duration-300 bg-white ${theme.border} ${cardOpacityClass}`}>
+      {/* Universal Handles */}
       <Handle type="target" position={Position.Top} id="t-t" className={handleClasses} />
       <Handle type="source" position={Position.Top} id="t-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
-      
-      {/* Bottom Handles */}
       <Handle type="target" position={Position.Bottom} id="b-t" className={handleClasses} />
       <Handle type="source" position={Position.Bottom} id="b-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
-      
-      {/* Left Handles */}
       <Handle type="target" position={Position.Left} id="l-t" className={handleClasses} />
       <Handle type="source" position={Position.Left} id="l-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
-      
-      {/* Right Handles */}
       <Handle type="target" position={Position.Right} id="r-t" className={handleClasses} />
       <Handle type="source" position={Position.Right} id="r-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
 
@@ -63,10 +58,12 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
           <div className="p-1.5 bg-white/20 rounded backdrop-blur-sm flex-shrink-0">{theme.icon}</div>
           <h3 className={`font-bold truncate uppercase tracking-widest ${headerFontSizeClass}`}>{data.label}</h3>
         </div>
-        <div className="flex items-center gap-1.5 ml-2">
-          <button onClick={() => data.onEdit?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Edit3 size={12} /></button>
-          <button onClick={() => data.onDelete?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Trash2 size={12} /></button>
-        </div>
+        {!isFiltered && (
+          <div className="flex items-center gap-1.5 ml-2">
+            <button onClick={() => data.onEdit?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Edit3 size={12} /></button>
+            <button onClick={() => data.onDelete?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Trash2 size={12} /></button>
+          </div>
+        )}
       </div>
 
       <div className="p-4 max-h-[400px] overflow-y-auto custom-scrollbar">

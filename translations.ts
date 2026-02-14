@@ -1,6 +1,7 @@
 
 export const translations = {
   en: {
+    all: "All Categories",
     studio_canvas: "Studio Canvas",
     data_table: "Data Table",
     logic_node: "Logic Node",
@@ -65,6 +66,7 @@ export const translations = {
     reset_confirm: "Are you sure you want to clear all items? This action cannot be undone."
   },
   zh: {
+    all: "显示全部",
     studio_canvas: "画布组件",
     data_table: "数据表格",
     logic_node: "逻辑节点",

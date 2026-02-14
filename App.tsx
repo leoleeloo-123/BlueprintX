@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2 } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType } from './types.ts';
@@ -78,7 +78,6 @@ function BlueprintStudio() {
   const { fitView } = useReactFlow();
   const hasPerformedInitialFit = useRef(false);
 
-  // Project Data Persistence (Nodes, Edges, Styles)
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
     if (saved) {
@@ -118,13 +117,11 @@ function BlueprintStudio() {
     return DEFAULT_SETTINGS;
   });
 
-  // Appearance Settings Persistence
   const [appearance, setAppearance] = useState<AppearanceSettings>(() => {
     const saved = localStorage.getItem(APPEARANCE_STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Ensure new fields exist for legacy users
         return { 
           ...DEFAULT_APPEARANCE, 
           ...parsed 
@@ -136,10 +133,12 @@ function BlueprintStudio() {
     return DEFAULT_APPEARANCE;
   });
 
-  // Trigger auto-align on initial load once nodes are available
+  // Filter State
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   useEffect(() => {
     if (!hasPerformedInitialFit.current && nodes.length > 0) {
-      // Small timeout to ensure React Flow has computed the node dimensions
       const timer = setTimeout(() => {
         fitView({ padding: 0.2 });
         hasPerformedInitialFit.current = true;
@@ -148,13 +147,11 @@ function BlueprintStudio() {
     }
   }, [nodes.length, fitView]);
 
-  // Effect to save project state whenever nodes, edges, or settings change
   useEffect(() => {
     const projectData = { nodes, edges, settings };
     localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(projectData));
   }, [nodes, edges, settings]);
 
-  // Effect to save appearance settings
   useEffect(() => {
     localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(appearance));
   }, [appearance]);
@@ -164,7 +161,6 @@ function BlueprintStudio() {
   const [showSettings, setShowSettings] = useState(false);
   const [showGeneralSettings, setShowGeneralSettings] = useState(false);
 
-  // Translation helper
   const t = (key: keyof typeof translations.en) => translations[appearance.language][key] || key;
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -209,6 +205,7 @@ function BlueprintStudio() {
     if (window.confirm(t('reset_confirm'))) {
       setNodes([]);
       setEdges([]);
+      setActiveCategoryFilter(null);
       hasPerformedInitialFit.current = false;
     }
   }, [t]);
@@ -270,7 +267,6 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
 
-    // Construct filename
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -328,7 +324,6 @@ function BlueprintStudio() {
         };
       });
 
-      // Update state which will trigger localStorage sync
       setSettings({ 
         tableCategories: tableCats, 
         logicCategories: logicCats, 
@@ -338,20 +333,45 @@ function BlueprintStudio() {
       });
       setNodes(importedNodes);
       setEdges(importedEdges);
+      setActiveCategoryFilter(null);
       
-      // Fitting view after import
       setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50);
     };
     reader.readAsBinaryString(file);
   };
 
   const nodesWithActions = useMemo(() => nodes.map(n => ({
-    ...n, data: { ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), settings, appearance }
-  })), [nodes, settings, appearance]);
+    ...n, data: { 
+      ...n.data, 
+      onEdit: setEditingNode, 
+      onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
+      settings, 
+      appearance,
+      activeCategoryFilter
+    }
+  })), [nodes, settings, appearance, activeCategoryFilter]);
 
-  const edgesWithActions = useMemo(() => edges.map(e => ({
-    ...e, data: { ...e.data, onEdit: setEditingEdge, onDelete: (id: string) => setEdges(eds => eds.filter(edge => edge.id !== id)), settings }
-  })), [edges, settings]);
+  const edgesWithActions = useMemo(() => edges.map(e => {
+    const sourceNode = nodes.find(n => n.id === e.source);
+    const targetNode = nodes.find(n => n.id === e.target);
+    return {
+      ...e, data: { 
+        ...e.data, 
+        onEdit: setEditingEdge, 
+        onDelete: (id: string) => setEdges(eds => eds.filter(edge => edge.id !== id)), 
+        settings,
+        activeCategoryFilter,
+        sourceCategoryId: sourceNode?.data.categoryId,
+        targetCategoryId: targetNode?.data.categoryId
+      }
+    };
+  }), [edges, settings, activeCategoryFilter, nodes]);
+
+  const selectedFilterName = useMemo(() => {
+    if (!activeCategoryFilter) return translations[appearance.language]['all'] || 'All';
+    const cat = settings.tableCategories.find(c => c.id === activeCategoryFilter);
+    return cat ? cat.name : (translations[appearance.language]['all'] || 'All');
+  }, [activeCategoryFilter, settings.tableCategories, appearance.language]);
 
   return (
     <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50 relative" style={{ backgroundColor: appearance.canvasBgColor }}>
@@ -418,6 +438,48 @@ function BlueprintStudio() {
       </aside>
 
       <main className="flex-1 min-h-0 relative">
+        {/* Canvas View Filters */}
+        <div className="absolute top-6 left-6 z-30 flex flex-col gap-2">
+          <div className="relative">
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group"
+            >
+              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors">
+                <Filter size={14} />
+              </div>
+              <div className="flex flex-col items-start pr-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Filter Category</span>
+                <span className="text-xs font-bold text-slate-700">{selectedFilterName}</span>
+              </div>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isFilterOpen && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <button 
+                  onClick={() => { setActiveCategoryFilter(null); setIsFilterOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeCategoryFilter ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                >
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                  {t('all') || 'All'}
+                </button>
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                {settings.tableCategories.map(cat => (
+                  <button 
+                    key={cat.id}
+                    onClick={() => { setActiveCategoryFilter(cat.id); setIsFilterOpen(false); }}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeCategoryFilter === cat.id ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: cat.color }} />
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         <ReactFlow
           nodes={nodesWithActions}
           edges={edgesWithActions}

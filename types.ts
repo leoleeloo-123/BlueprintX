@@ -63,12 +63,13 @@ export interface NodeData {
   columns?: TableColumn[];
   description?: string;
   bulletPoints?: string[];
-  comment?: string; // New field for table comment
-  dataSourceId?: string; // New field for table data source
+  comment?: string; 
+  dataSourceId?: string; 
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
   appearance?: AppearanceSettings;
+  activeCategoryFilter?: string | null;
 }
 
 export interface EdgeData {
@@ -78,14 +79,17 @@ export interface EdgeData {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
+  activeCategoryFilter?: string | null;
+  sourceCategoryId?: string;
+  targetCategoryId?: string;
 }
 
 export interface GlobalSettings {
   tableCategories: TableCategory[];
   logicCategories: LogicCategory[];
   connectionTypes: ConnectionType[];
-  dataSources: DataSource[]; // New global management for data sources
-  fieldTypes: FieldType[]; // New global management for field types
+  dataSources: DataSource[]; 
+  fieldTypes: FieldType[]; 
 }
 
 export interface BlueprintProject {
