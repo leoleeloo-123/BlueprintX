@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType } from './types.ts';
@@ -73,6 +73,7 @@ const DEFAULT_APPEARANCE: AppearanceSettings = {
 
 const PROJECT_STORAGE_KEY = 'blueprint_x_project_v1';
 const APPEARANCE_STORAGE_KEY = 'blueprint_x_appearance_v1';
+const HIDE_ALL_VALUE = '__HIDE_ALL__';
 
 function BlueprintStudio() {
   const { fitView } = useReactFlow();
@@ -334,14 +335,17 @@ function BlueprintStudio() {
     const lang = appearance.language;
     if (type === 'table') {
       if (!activeTableFilter) return t('all');
+      if (activeTableFilter === HIDE_ALL_VALUE) return t('hide_all');
       return settings.tableCategories.find(c => c.id === activeTableFilter)?.name || t('all');
     }
     if (type === 'logic') {
       if (!activeLogicFilter) return t('all');
+      if (activeLogicFilter === HIDE_ALL_VALUE) return t('hide_all');
       return settings.logicCategories.find(c => c.id === activeLogicFilter)?.name || t('all');
     }
     if (type === 'edge') {
       if (!activeEdgeFilter) return t('all');
+      if (activeEdgeFilter === HIDE_ALL_VALUE) return t('hide_all');
       return settings.connectionTypes.find(c => c.id === activeEdgeFilter)?.name || t('all');
     }
     return t('all');
@@ -440,6 +444,10 @@ function BlueprintStudio() {
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}
                   </button>
                 ))}
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                <button onClick={() => { setActiveTableFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTableFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <EyeOff size={14} />{t('hide_all')}
+                </button>
               </div>
             )}
           </div>
@@ -470,6 +478,10 @@ function BlueprintStudio() {
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}
                   </button>
                 ))}
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                <button onClick={() => { setActiveLogicFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeLogicFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <EyeOff size={14} />{t('hide_all')}
+                </button>
               </div>
             )}
           </div>
@@ -500,6 +512,10 @@ function BlueprintStudio() {
                     <div className="w-3 h-px border-t border-slate-400" style={{ borderColor: conn.color, borderWidth: 2 }} />{conn.name}
                   </button>
                 ))}
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                <button onClick={() => { setActiveEdgeFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeEdgeFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <EyeOff size={14} />{t('hide_all')}
+                </button>
               </div>
             )}
           </div>

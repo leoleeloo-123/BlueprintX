@@ -2,6 +2,7 @@
 export const translations = {
   en: {
     all: "All Categories",
+    hide_all: "Hide All",
     studio_canvas: "Studio Canvas",
     data_table: "Data Table",
     logic_node: "Logic Node",
@@ -67,6 +68,7 @@ export const translations = {
   },
   zh: {
     all: "显示全部",
+    hide_all: "全部隐藏",
     studio_canvas: "画布组件",
     data_table: "数据表格",
     logic_node: "逻辑节点",

@@ -4,6 +4,8 @@ import { EdgeProps, getSmoothStepPath, EdgeLabelRenderer, BaseEdge } from 'react
 import { Edit3, Trash2 } from 'lucide-react';
 import { GlobalSettings } from '../types.ts';
 
+const HIDE_ALL_VALUE = '__HIDE_ALL__';
+
 export const BlueprintEdge = ({
   id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition,
   style = {}, markerEnd, label, selected, data
@@ -21,28 +23,35 @@ export const BlueprintEdge = ({
   let isFilteredOut = false;
   
   // 1. Check specific edge filter
-  if (data.activeEdgeFilter && data.typeId !== data.activeEdgeFilter) {
-    isFilteredOut = true;
-  }
-  
-  // 2. Check if either source or target node is filtered by Table/Logic filters
-  if (data.activeTableFilter) {
-    if (data.sourceCategoryId !== data.activeTableFilter || data.targetCategoryId !== data.activeTableFilter) {
-       // Only fade if BOTH aren't the selected table category? 
-       // Or if EITHER isn't? Usually, if we highlight a category, we want to see connections WITHIN that category.
-       if (data.sourceCategoryId !== data.activeTableFilter || data.targetCategoryId !== data.activeTableFilter) {
-         isFilteredOut = true;
-       }
-    }
-  }
-  
-  if (data.activeLogicFilter) {
-    if (data.sourceCategoryId !== data.activeLogicFilter || data.targetCategoryId !== data.activeLogicFilter) {
+  if (data.activeEdgeFilter) {
+    if (data.activeEdgeFilter === HIDE_ALL_VALUE || data.typeId !== data.activeEdgeFilter) {
       isFilteredOut = true;
     }
   }
   
-  const edgeOpacity = isFilteredOut ? 0.1 : 1;
+  // 2. Check if either source or target node is filtered by Table/Logic filters
+  if (data.activeTableFilter) {
+    // If table filter is "Hide All", and this edge touches a table, we check if it should fade
+    // Usually, edges between a shown node and a hidden node should fade.
+    if (data.activeTableFilter === HIDE_ALL_VALUE) {
+       // If source or target is a table, and table filter is hide all, we fade.
+       // However, sourceCategoryId and targetCategoryId are only provided if they match.
+       // Simplified logic: If a category filter is active, only show edges between matching nodes.
+       isFilteredOut = true;
+    } else if (data.sourceCategoryId !== data.activeTableFilter || data.targetCategoryId !== data.activeTableFilter) {
+       isFilteredOut = true;
+    }
+  }
+  
+  if (data.activeLogicFilter) {
+    if (data.activeLogicFilter === HIDE_ALL_VALUE) {
+      isFilteredOut = true;
+    } else if (data.sourceCategoryId !== data.activeLogicFilter || data.targetCategoryId !== data.activeLogicFilter) {
+      isFilteredOut = true;
+    }
+  }
+  
+  const edgeOpacity = isFilteredOut ? 0.05 : 1;
 
   return (
     <>

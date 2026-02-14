@@ -6,6 +6,7 @@ import { NodeData, NodeCardType, GlobalSettings } from '../types.ts';
 
 const HEADER_SIZES = { sm: 'text-[10px]', md: 'text-[12px]', lg: 'text-[14px]' };
 const CONTENT_SIZES = { sm: 'text-[10px]', md: 'text-[11px]', lg: 'text-[13px]' };
+const HIDE_ALL_VALUE = '__HIDE_ALL__';
 
 export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & { settings: GlobalSettings }>) => {
   const isTable = data.cardType === NodeCardType.TABLE;
@@ -27,14 +28,18 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   // Filtering Logic
   let isFilteredOut = false;
-  if (isTable && data.activeTableFilter && data.categoryId !== data.activeTableFilter) {
-    isFilteredOut = true;
+  if (isTable && data.activeTableFilter) {
+    if (data.activeTableFilter === HIDE_ALL_VALUE || data.categoryId !== data.activeTableFilter) {
+      isFilteredOut = true;
+    }
   }
-  if (isLogic && data.activeLogicFilter && data.categoryId !== data.activeLogicFilter) {
-    isFilteredOut = true;
+  if (isLogic && data.activeLogicFilter) {
+    if (data.activeLogicFilter === HIDE_ALL_VALUE || data.categoryId !== data.activeLogicFilter) {
+      isFilteredOut = true;
+    }
   }
   
-  const cardOpacityClass = isFilteredOut ? 'opacity-20 saturate-50' : 'opacity-100';
+  const cardOpacityClass = isFilteredOut ? 'opacity-10 grayscale pointer-events-none' : 'opacity-100';
 
   const theme = {
     border: selected ? 'border-slate-900 ring-2 ring-slate-100' : 'border-slate-100',
