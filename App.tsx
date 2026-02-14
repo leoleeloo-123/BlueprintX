@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, { 
   Background, 
   BackgroundVariant,
@@ -70,6 +70,7 @@ const APPEARANCE_STORAGE_KEY = 'blueprint_x_appearance_v1';
 
 function BlueprintStudio() {
   const { fitView } = useReactFlow();
+  const hasPerformedInitialFit = useRef(false);
 
   // Project Data Persistence (Nodes, Edges, Styles)
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
@@ -128,6 +129,18 @@ function BlueprintStudio() {
     }
     return DEFAULT_APPEARANCE;
   });
+
+  // Trigger auto-align on initial load once nodes are available
+  useEffect(() => {
+    if (!hasPerformedInitialFit.current && nodes.length > 0) {
+      // Small timeout to ensure React Flow has computed the node dimensions
+      const timer = setTimeout(() => {
+        fitView({ padding: 0.2 });
+        hasPerformedInitialFit.current = true;
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [nodes.length, fitView]);
 
   // Effect to save project state whenever nodes, edges, or settings change
   useEffect(() => {
