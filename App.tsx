@@ -13,7 +13,6 @@ import ReactFlow, {
   EdgeChange,
   NodeChange,
   ReactFlowProvider,
-  Panel,
   MarkerType,
   useReactFlow
 } from 'reactflow';
@@ -62,7 +61,7 @@ const PROJECT_STORAGE_KEY = 'blueprint_x_project_v1';
 const APPEARANCE_STORAGE_KEY = 'blueprint_x_appearance_v1';
 
 function BlueprintStudio() {
-  const { setViewport } = useReactFlow();
+  const { fitView } = useReactFlow();
 
   // Project Data Persistence (Nodes, Edges, Styles)
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
@@ -170,6 +169,10 @@ function BlueprintStudio() {
     setEditingEdge(null);
   };
 
+  const handleAutoAlign = useCallback(() => {
+    fitView({ padding: 0.2, duration: 800 });
+  }, [fitView]);
+
   const addNode = (type: NodeCardType) => {
     const id = Date.now().toString();
     let defaultCatId = undefined;
@@ -244,6 +247,9 @@ function BlueprintStudio() {
       setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes });
       setNodes(importedNodes);
       setEdges(importedEdges);
+      
+      // Fitting view after import
+      setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50);
     };
     reader.readAsBinaryString(file);
   };
@@ -294,10 +300,10 @@ function BlueprintStudio() {
                 <Settings2 size={18} />
                 <span>{t('global_config')}</span>
               </button>
-              <div className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50">
+              <button onClick={handleAutoAlign} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50 w-full text-left">
                 <Layers size={18} />
                 <span>{t('auto_align')}</span>
-              </div>
+              </button>
               <button onClick={() => setShowGeneralSettings(true)} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
                 <Sliders size={18} />
                 <span>{t('general_setting')}</span>
@@ -327,6 +333,7 @@ function BlueprintStudio() {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
+          fitViewOptions={{ padding: 0.2 }}
           className="bg-transparent"
           defaultEdgeOptions={{ type: 'blueprintEdge' }}
         >
