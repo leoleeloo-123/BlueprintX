@@ -16,10 +16,10 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType } from './types.ts';
+import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
 import { translations } from './translations.ts';
 import { BlueprintCard } from './components/BlueprintCard.tsx';
 import { BlueprintEdge } from './components/BlueprintEdge.tsx';
@@ -58,7 +58,8 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     { id: 'ft-number', name: 'Number' },
     { id: 'ft-date', name: 'Date' },
     { id: 'ft-bool', name: 'Boolean' }
-  ]
+  ],
+  tags: []
 };
 
 const DEFAULT_APPEARANCE: AppearanceSettings = {
@@ -123,10 +124,7 @@ function BlueprintStudio() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return { 
-          ...DEFAULT_APPEARANCE, 
-          ...parsed 
-        };
+        return { ...DEFAULT_APPEARANCE, ...parsed };
       } catch (e) {
         console.error("Failed to parse saved appearance", e);
       }
@@ -138,8 +136,9 @@ function BlueprintStudio() {
   const [activeTableFilter, setActiveTableFilter] = useState<string | null>(null);
   const [activeLogicFilter, setActiveLogicFilter] = useState<string | null>(null);
   const [activeEdgeFilter, setActiveEdgeFilter] = useState<string | null>(null);
+  const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
   
-  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | null>(null);
+  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | null>(null);
 
   useEffect(() => {
     if (!hasPerformedInitialFit.current && nodes.length > 0) {
@@ -212,6 +211,7 @@ function BlueprintStudio() {
       setActiveTableFilter(null);
       setActiveLogicFilter(null);
       setActiveEdgeFilter(null);
+      setActiveTagFilter(null);
       hasPerformedInitialFit.current = false;
     }
   }, [t]);
@@ -237,7 +237,8 @@ function BlueprintStudio() {
         description: '',
         bulletPoints: [],
         comment: '',
-        dataSourceId: ''
+        dataSourceId: '',
+        tags: []
       },
     }));
   };
@@ -247,7 +248,8 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(nodes.map(n => ({
       ID: n.id, Label: n.data.label, Type: n.data.cardType, CatID: n.data.categoryId || '', X: n.position.x, Y: n.position.y, 
       Columns: n.data.columns?.map(c => `${c.name}:${c.typeId || ''}:${c.isKey ? 'K' : ''}`).join('|') || '',
-      Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || '', Comment: n.data.comment || '', DataSourceID: n.data.dataSourceId || ''
+      Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || '', Comment: n.data.comment || '', DataSourceID: n.data.dataSourceId || '',
+      Tags: n.data.tags?.join('|') || ''
     }))), "Nodes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(edges.map(e => ({
       ID: e.id, Source: e.source, Target: e.target, SourceHandle: e.sourceHandle || '', TargetHandle: e.targetHandle || '',
@@ -258,6 +260,7 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.connectionTypes), "ConnectionTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tags || []), "Tags");
 
     const now = new Date();
     const filename = `BlueprintX_${now.getTime()}.xlsx`;
@@ -275,6 +278,7 @@ function BlueprintStudio() {
       const connTypes = workbook.Sheets["ConnectionTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ConnectionTypes"]) as ConnectionType[] : settings.connectionTypes;
       const dataSources = workbook.Sheets["DataSources"] ? XLSX.utils.sheet_to_json(workbook.Sheets["DataSources"]) as DataSource[] : settings.dataSources;
       const fTypes = workbook.Sheets["FieldTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["FieldTypes"]) as FieldType[] : settings.fieldTypes;
+      const importedTags = workbook.Sheets["Tags"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Tags"]) as Tag[] : [];
       
       const importedNodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
       const importedNodes = importedNodesRaw.map(n => ({
@@ -286,7 +290,8 @@ function BlueprintStudio() {
             return { id: String(i), name, typeId: typeId || undefined, isKey: key === 'K' };
           }) : [],
           description: n.Desc, bulletPoints: n.Bullets ? n.Bullets.split('|') : [],
-          comment: n.Comment || '', dataSourceId: n.DataSourceID || ''
+          comment: n.Comment || '', dataSourceId: n.DataSourceID || '',
+          tags: n.Tags ? n.Tags.split('|') : []
         }
       }));
 
@@ -300,12 +305,13 @@ function BlueprintStudio() {
         };
       });
 
-      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes, dataSources, fieldTypes: fTypes });
+      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes, dataSources, fieldTypes: fTypes, tags: importedTags });
       setNodes(importedNodes);
       setEdges(importedEdges);
       setActiveTableFilter(null);
       setActiveLogicFilter(null);
       setActiveEdgeFilter(null);
+      setActiveTagFilter(null);
       
       setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50);
     };
@@ -315,9 +321,9 @@ function BlueprintStudio() {
   const nodesWithActions = useMemo(() => nodes.map(n => ({
     ...n, data: { 
       ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
-      settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter
+      settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter
     }
-  })), [nodes, settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter]);
+  })), [nodes, settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter]);
 
   const edgesWithActions = useMemo(() => edges.map(e => {
     const sourceNode = nodes.find(n => n.id === e.source);
@@ -325,14 +331,14 @@ function BlueprintStudio() {
     return {
       ...e, data: { 
         ...e.data, onEdit: setEditingEdge, onDelete: (id: string) => setEdges(eds => eds.filter(edge => edge.id !== id)), 
-        settings, activeTableFilter, activeLogicFilter, activeEdgeFilter,
-        sourceCategoryId: sourceNode?.data.categoryId, targetCategoryId: targetNode?.data.categoryId
+        settings, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter,
+        sourceCategoryId: sourceNode?.data.categoryId, targetCategoryId: targetNode?.data.categoryId,
+        sourceTags: sourceNode?.data.tags, targetTags: targetNode?.data.tags
       }
     };
-  }), [edges, settings, activeTableFilter, activeLogicFilter, activeEdgeFilter, nodes]);
+  }), [edges, settings, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter, nodes]);
 
-  const getFilterName = (type: 'table' | 'logic' | 'edge') => {
-    const lang = appearance.language;
+  const getFilterName = (type: 'table' | 'logic' | 'edge' | 'tag') => {
     if (type === 'table') {
       if (!activeTableFilter) return t('all');
       if (activeTableFilter === HIDE_ALL_VALUE) return t('hide_all');
@@ -347,6 +353,11 @@ function BlueprintStudio() {
       if (!activeEdgeFilter) return t('all');
       if (activeEdgeFilter === HIDE_ALL_VALUE) return t('hide_all');
       return settings.connectionTypes.find(c => c.id === activeEdgeFilter)?.name || t('all');
+    }
+    if (type === 'tag') {
+      if (!activeTagFilter) return t('all');
+      if (activeTagFilter === HIDE_ALL_VALUE) return t('hide_all');
+      return settings.tags.find(tag => tag.id === activeTagFilter)?.name || t('all');
     }
     return t('all');
   };
@@ -418,6 +429,40 @@ function BlueprintStudio() {
       <main className="flex-1 min-h-0 relative">
         {/* Canvas View Filters */}
         <div className="absolute top-6 left-6 z-30 flex gap-3">
+          {/* Tag Filter */}
+          <div className="relative">
+            <button 
+              onClick={() => setOpenFilterType(openFilterType === 'tag' ? null : 'tag')}
+              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTagFilter ? 'ring-2 ring-emerald-400 border-transparent' : ''}`}
+            >
+              <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <TagIcon size={14} />
+              </div>
+              <div className="flex flex-col items-start pr-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('tags')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('tag')}</span>
+              </div>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'tag' ? 'rotate-180' : ''}`} />
+            </button>
+            {openFilterType === 'tag' && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <button onClick={() => { setActiveTagFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeTagFilter ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
+                </button>
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                {settings.tags.map(tag => (
+                  <button key={tag.id} onClick={() => { setActiveTagFilter(tag.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTagFilter === tag.id ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />{tag.name}
+                  </button>
+                ))}
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                <button onClick={() => { setActiveTagFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTagFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <EyeOff size={14} />{t('hide_all')}
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Table Filter */}
           <div className="relative">
             <button 

@@ -28,6 +28,8 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   // Filtering Logic
   let isFilteredOut = false;
+  
+  // Category Filtering
   if (isTable && data.activeTableFilter) {
     if (data.activeTableFilter === HIDE_ALL_VALUE || data.categoryId !== data.activeTableFilter) {
       isFilteredOut = true;
@@ -35,6 +37,15 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   }
   if (isLogic && data.activeLogicFilter) {
     if (data.activeLogicFilter === HIDE_ALL_VALUE || data.categoryId !== data.activeLogicFilter) {
+      isFilteredOut = true;
+    }
+  }
+
+  // Tag Filtering
+  if (data.activeTagFilter) {
+    if (data.activeTagFilter === HIDE_ALL_VALUE) {
+      isFilteredOut = true;
+    } else if (!data.tags?.includes(data.activeTagFilter)) {
       isFilteredOut = true;
     }
   }
@@ -53,8 +64,26 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   const handleClasses = `!w-4 !h-4 !bg-slate-400 !border-2 !border-white shadow-sm transition-all duration-200 hover:scale-125 hover:!bg-blue-500 z-50 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
 
+  // Resolve Tag UI components as side tabs
+  const tagIndicators = (data.tags || []).map(tagId => {
+    const tag = data.settings?.tags.find(t => t.id === tagId);
+    return tag ? (
+      <div 
+        key={tag.id} 
+        className="w-2 h-5 rounded-l shadow-[1px_1px_3px_rgba(0,0,0,0.1)] border-y border-l border-white/20" 
+        style={{ backgroundColor: tag.color }}
+        title={tag.name}
+      />
+    ) : null;
+  });
+
   return (
-    <div className={`group min-w-[220px] max-w-[320px] rounded-xl overflow-hidden border shadow-sm transition-all duration-300 bg-white ${theme.border} ${cardOpacityClass}`}>
+    <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
+      {/* Visual Tag Tabs - Protruding from the left side */}
+      <div className="absolute top-10 left-0 -translate-x-full flex flex-col gap-1 pointer-events-none z-10">
+        {tagIndicators}
+      </div>
+
       {/* Universal Handles */}
       <Handle type="target" position={Position.Top} id="t-t" className={handleClasses} />
       <Handle type="source" position={Position.Top} id="t-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
@@ -65,7 +94,7 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
       <Handle type="target" position={Position.Right} id="r-t" className={handleClasses} />
       <Handle type="source" position={Position.Right} id="r-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
 
-      <div style={{ backgroundColor: headerColor }} className="p-3 flex items-center justify-between text-white gap-3 transition-colors duration-300">
+      <div style={{ backgroundColor: headerColor }} className="p-3 flex items-center justify-between text-white gap-3 transition-colors duration-300 rounded-t-xl relative">
         <div className="flex items-center gap-2 overflow-hidden">
           <div className="p-1.5 bg-white/20 rounded backdrop-blur-sm flex-shrink-0">{theme.icon}</div>
           <h3 className={`font-bold truncate uppercase tracking-widest ${headerFontSizeClass}`}>{data.label}</h3>
@@ -78,7 +107,7 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
         )}
       </div>
 
-      <div className="p-4 max-h-[400px] overflow-y-auto custom-scrollbar">
+      <div className="p-4 max-h-[400px] overflow-y-auto custom-scrollbar rounded-b-xl">
         {isTable && (
           <>
             {(dataSourceName || data.comment) && (

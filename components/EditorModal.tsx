@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Tag, Database, MessageSquare, Key } from 'lucide-react';
+import { X, Plus, Trash2, Tag as TagIcon, Database, MessageSquare, Key } from 'lucide-react';
 import { Node } from 'reactflow';
-import { NodeData, NodeCardType, TableColumn, GlobalSettings } from '../types.ts';
+import { NodeData, NodeCardType, TableColumn, GlobalSettings, Tag } from '../types.ts';
 import { translations } from '../translations.ts';
 
 interface EditorModalProps {
@@ -29,11 +29,18 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
   const [bulletPoints, setBulletPoints] = useState<string[]>(node.data.bulletPoints || []);
   const [comment, setComment] = useState(node.data.comment || '');
   const [dataSourceId, setDataSourceId] = useState(node.data.dataSourceId || '');
+  const [assignedTags, setAssignedTags] = useState<string[]>(node.data.tags || []);
 
   const isTable = cardType === NodeCardType.TABLE;
   const isLogic = cardType === NodeCardType.LOGIC_NOTE;
 
   const t = (key: keyof typeof translations.en) => translations[language][key] || key;
+
+  const toggleTag = (tagId: string) => {
+    setAssignedTags(prev => 
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    );
+  };
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -43,28 +50,52 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400"><X size={20} /></button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar">
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{t('component_identity')}</label>
               <input type="text" value={label} onChange={e => setLabel(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
-            {(isTable || isLogic) && (
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Tag size={10} /> {t('category')}</label>
-                <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
-                  {isTable ? (
-                    settings.tableCategories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))
-                  ) : (
-                    settings.logicCategories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))
-                  )}
-                </select>
-              </div>
-            )}
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">{t('category')}</label>
+              <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                {isTable ? (
+                  settings.tableCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))
+                ) : (
+                  settings.logicCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+
+          {/* Tags Assignment */}
+          <div className="pt-4 border-t border-slate-100">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+              <TagIcon size={10} /> {t('assign_tags')}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(settings.tags || []).map(tag => (
+                <button
+                  key={tag.id}
+                  onClick={() => toggleTag(tag.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 ${
+                    assignedTags.includes(tag.id) 
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' 
+                      : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'
+                  }`}
+                >
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                  {tag.name}
+                </button>
+              ))}
+              {(settings.tags || []).length === 0 && (
+                <span className="text-xs italic text-slate-400">{t('none')}</span>
+              )}
+            </div>
           </div>
 
           {isTable && (
@@ -98,19 +129,10 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
                   {columns.map(col => (
                     <div key={col.id} className="flex flex-wrap items-center gap-2 p-3 bg-slate-50/50 border border-slate-100 rounded-xl group transition-all hover:bg-white hover:shadow-sm">
                       <div className="flex-1 min-w-[150px]">
-                        <input 
-                          type="text" 
-                          value={col.name} 
-                          onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, name: e.target.value } : c))} 
-                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold uppercase tracking-tight focus:ring-2 focus:ring-blue-500 outline-none" 
-                        />
+                        <input type="text" value={col.name} onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, name: e.target.value } : c))} className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold uppercase tracking-tight focus:ring-2 focus:ring-blue-500 outline-none" />
                       </div>
                       <div className="w-32">
-                        <select 
-                          value={col.typeId || ''} 
-                          onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, typeId: e.target.value || undefined } : c))}
-                          className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500"
-                        >
+                        <select value={col.typeId || ''} onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, typeId: e.target.value || undefined } : c))} className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500">
                           <option value="">{t('none')}</option>
                           {settings.fieldTypes.map(ft => (
                             <option key={ft.id} value={ft.id}>{ft.name}</option>
@@ -118,28 +140,20 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
                         </select>
                       </div>
                       <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-lg">
-                        <input 
-                          type="checkbox" 
-                          id={`key-${col.id}`}
-                          checked={col.isKey} 
-                          onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, isKey: e.target.checked } : c))}
-                          className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500"
-                        />
+                        <input type="checkbox" id={`key-${col.id}`} checked={col.isKey} onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, isKey: e.target.checked } : c))} className="w-3 h-3 text-blue-600 rounded focus:ring-blue-500" />
                         <label htmlFor={`key-${col.id}`} className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1 cursor-pointer select-none">
                           <Key size={10} className={col.isKey ? 'text-amber-500' : 'text-slate-300'} />
                           {t('key_field')}
                         </label>
                       </div>
-                      <button onClick={() => setColumns(columns.filter(c => c.id !== col.id))} className="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                        <Trash2 size={16} />
-                      </button>
+                      <button onClick={() => setColumns(columns.filter(c => c.id !== col.id))} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                <div><label className="block text-sm font-bold text-slate-700 mb-2">{t('internal_logic')}</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium" /></div>
+                <div><label className="block text-sm font-bold text-slate-700 mb-2">{t('internal_logic')}</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500" /></div>
                 <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700">{t('directives')}</span><button onClick={() => setBulletPoints([...bulletPoints, 'New Point'])} className="text-xs font-bold text-purple-600 flex items-center gap-1"><Plus size={14} /> {t('add_point')}</button></div>
                 {bulletPoints.map((p, idx) => (
                   <div key={idx} className="flex gap-2">
@@ -154,7 +168,7 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
 
         <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
           <button onClick={onClose} className="px-6 py-2 text-slate-600 text-sm font-bold">{t('cancel')}</button>
-          <button onClick={() => onSave({ label, categoryId, columns, description, bulletPoints, comment, dataSourceId })} className="px-8 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg">{t('commit_update')}</button>
+          <button onClick={() => onSave({ label, categoryId, columns, description, bulletPoints, comment, dataSourceId, tags: assignedTags })} className="px-8 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg">{t('commit_update')}</button>
         </div>
       </div>
     </div>

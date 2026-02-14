@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Palette, Link2, Layout, FileText, Database, Type } from 'lucide-react';
-import { GlobalSettings, TableCategory, ConnectionType, LogicCategory, DataSource, FieldType } from '../types.ts';
+import { X, Plus, Trash2, Palette, Link2, Layout, FileText, Database, Type, Tag as TagIcon } from 'lucide-react';
+import { GlobalSettings, TableCategory, ConnectionType, LogicCategory, DataSource, FieldType, Tag } from '../types.ts';
 import { translations } from '../translations.ts';
 
 interface SettingsModalProps {
@@ -13,7 +13,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose, onSave, language }) => {
   const [localSettings, setLocalSettings] = useState<GlobalSettings>(settings);
-  const [activeTab, setActiveTab] = useState<'tables' | 'logic' | 'edges'>('tables');
+  const [activeTab, setActiveTab] = useState<'tables' | 'logic' | 'edges' | 'tags'>('tables');
 
   const t = (key: keyof typeof translations.en) => translations[language][key] || key;
 
@@ -62,6 +62,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
     setLocalSettings(prev => ({ ...prev, fieldTypes: [...prev.fieldTypes, newType] }));
   };
 
+  const addTag = () => {
+    const newTag: Tag = {
+      id: `tag-${Date.now()}`,
+      name: t('new_tag'),
+      color: '#10b981'
+    };
+    setLocalSettings(prev => ({ ...prev, tags: [...(prev.tags || []), newTag] }));
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
@@ -78,12 +87,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
             <button onClick={() => setActiveTab('tables')} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'tables' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'}`}><Layout size={16} /> {t('table_styles')}</button>
             <button onClick={() => setActiveTab('logic')} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'logic' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'}`}><FileText size={16} /> {t('logic_styles')}</button>
             <button onClick={() => setActiveTab('edges')} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'edges' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'}`}><Link2 size={16} /> {t('link_styles')}</button>
+            <button onClick={() => setActiveTab('tags')} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'tags' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'}`}><TagIcon size={16} /> {t('tag_styles')}</button>
           </div>
 
           <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
             {activeTab === 'tables' && (
               <div className="space-y-8">
-                {/* Table Categories */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('table_categories')}</h3>
@@ -102,7 +111,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
                   </div>
                 </div>
 
-                {/* Field Types */}
                 <div className="pt-6 border-t border-slate-100">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('manage_field_types')}</h3>
@@ -121,7 +129,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
                   </div>
                 </div>
 
-                {/* Data Sources */}
                 <div className="pt-6 border-t border-slate-100">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('manage_data_sources')}</h3>
@@ -167,6 +174,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
                       <div className="flex-1"><label className="text-[10px] font-bold text-slate-400 uppercase">{t('weight')}</label><input type="range" min="1" max="5" value={conn.width} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].width = parseInt(e.target.value); setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer" /></div>
                       <div className="flex-1"><label className="text-[10px] font-bold text-slate-400 uppercase">{t('style')}</label><select value={conn.dashStyle} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].dashStyle = e.target.value as any; setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="w-full text-xs p-1 border border-slate-200 rounded"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></div>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeTab === 'tags' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('tag_styles')}</h3>
+                  <button onClick={addTag} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                    <Plus size={14} /> {t('add_field')}
+                  </button>
+                </div>
+                {(localSettings.tags || []).map((tag, idx) => (
+                  <div key={tag.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">
+                    <input type="color" value={tag.color} onChange={e => { const updated = [...(localSettings.tags || [])]; updated[idx].color = e.target.value; setLocalSettings({ ...localSettings, tags: updated }); }} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent" />
+                    <input type="text" value={tag.name} onChange={e => { const updated = [...(localSettings.tags || [])]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, tags: updated }); }} className="flex-1 bg-transparent text-sm font-medium focus:ring-0 border-0 p-0" />
+                    <button onClick={() => setLocalSettings(p => ({ ...p, tags: (p.tags || []).filter(t => t.id !== tag.id)}))} className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
                   </div>
                 ))}
               </div>

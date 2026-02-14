@@ -56,6 +56,12 @@ export interface ConnectionType {
   dashStyle: 'solid' | 'dashed' | 'dotted';
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface NodeData {
   label: string;
   cardType: NodeCardType;
@@ -65,6 +71,7 @@ export interface NodeData {
   bulletPoints?: string[];
   comment?: string; 
   dataSourceId?: string; 
+  tags?: string[]; // Array of Tag IDs
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
@@ -73,6 +80,7 @@ export interface NodeData {
   activeTableFilter?: string | null;
   activeLogicFilter?: string | null;
   activeEdgeFilter?: string | null;
+  activeTagFilter?: string | null;
 }
 
 export interface EdgeData {
@@ -86,8 +94,11 @@ export interface EdgeData {
   activeTableFilter?: string | null;
   activeLogicFilter?: string | null;
   activeEdgeFilter?: string | null;
+  activeTagFilter?: string | null;
   sourceCategoryId?: string;
   targetCategoryId?: string;
+  sourceTags?: string[];
+  targetTags?: string[];
 }
 
 export interface GlobalSettings {
@@ -96,6 +107,7 @@ export interface GlobalSettings {
   connectionTypes: ConnectionType[];
   dataSources: DataSource[]; 
   fieldTypes: FieldType[]; 
+  tags: Tag[]; // New global tags list
 }
 
 export interface BlueprintProject {

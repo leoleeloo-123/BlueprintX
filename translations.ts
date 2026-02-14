@@ -64,7 +64,13 @@ export const translations = {
     manage_field_types: "Manage Field Types",
     new_field_type: "New Field Type",
     reset_canvas: "Reset Canvas",
-    reset_confirm: "Are you sure you want to clear all items? This action cannot be undone."
+    reset_confirm: "Are you sure you want to clear all items? This action cannot be undone.",
+    tags: "Tags",
+    manage_tags: "Manage Tags",
+    new_tag: "New Tag",
+    tag_styles: "Tag Styles",
+    assign_tags: "Assign Tags",
+    filter_tags: "Filter by Tag"
   },
   zh: {
     all: "显示全部",
@@ -130,6 +136,12 @@ export const translations = {
     manage_field_types: "管理字段类型",
     new_field_type: "新字段类型",
     reset_canvas: "重置画布",
-    reset_confirm: "您确定要清空所有内容吗？此操作无法撤销。"
+    reset_confirm: "您确定要清空所有内容吗？此操作无法撤销。",
+    tags: "标签",
+    manage_tags: "管理标签",
+    new_tag: "新标签",
+    tag_styles: "标签样式",
+    assign_tags: "分配标签",
+    filter_tags: "按标签筛选"
   }
 };
