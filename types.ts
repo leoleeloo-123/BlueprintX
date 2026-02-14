@@ -5,6 +5,15 @@ export enum NodeCardType {
   REPORT = 'REPORT'
 }
 
+export type FontSizeScale = 'sm' | 'md' | 'lg';
+
+export interface AppearanceSettings {
+  language: 'en' | 'zh';
+  canvasBgColor: string;
+  headerFontSize: FontSizeScale;
+  contentFontSize: FontSizeScale;
+}
+
 export interface TableColumn {
   id: string;
   name: string;
@@ -35,20 +44,23 @@ export interface ConnectionType {
 export interface NodeData {
   label: string;
   cardType: NodeCardType;
-  categoryId?: string; // Reference to TableCategory or LogicCategory
+  categoryId?: string; 
   columns?: TableColumn[];
   description?: string;
   bulletPoints?: string[];
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+  settings?: GlobalSettings;
+  appearance?: AppearanceSettings;
 }
 
 export interface EdgeData {
-  typeId?: string; // Reference to ConnectionType
+  typeId?: string;
   label?: string;
   hasArrow?: boolean;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+  settings?: GlobalSettings;
 }
 
 export interface GlobalSettings {

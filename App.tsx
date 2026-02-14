@@ -16,15 +16,17 @@ import ReactFlow, {
   Panel,
   MarkerType
 } from 'reactflow';
-import { Download, Upload, Plus, FileSpreadsheet, Layers, Settings2, Info, X } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory } from './types.ts';
+import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings } from './types.ts';
+import { translations } from './translations.ts';
 import { BlueprintCard } from './components/BlueprintCard.tsx';
 import { BlueprintEdge } from './components/BlueprintEdge.tsx';
 import { EditorModal } from './components/EditorModal.tsx';
 import { EdgeEditorModal } from './components/EdgeEditorModal.tsx';
 import { SettingsModal } from './components/SettingsModal.tsx';
+import { GeneralSettingsModal } from './components/GeneralSettingsModal.tsx';
 import { Legend } from './components/Legend.tsx';
 
 const nodeTypes = { blueprintNode: BlueprintCard };
@@ -48,54 +50,41 @@ const DEFAULT_SETTINGS: GlobalSettings = {
   ]
 };
 
-const initialNodes: Node<NodeData>[] = [
-  {
-    id: '1',
-    type: 'blueprintNode',
-    position: { x: 50, y: 50 },
-    data: { 
-      label: 'Core Data Source', 
-      cardType: NodeCardType.TABLE,
-      categoryId: 'cat-src',
-      columns: [{ id: '1', name: 'Identity ID' }, { id: '2', name: 'Value' }]
-    },
-  },
-  {
-    id: '3',
-    type: 'blueprintNode',
-    position: { x: 225, y: 300 },
-    data: { 
-      label: 'Validation Logic', 
-      cardType: NodeCardType.LOGIC_NOTE,
-      categoryId: 'log-rule',
-      description: 'Integrates source data.',
-      bulletPoints: ['Match IDs']
-    },
-  }
-];
+const DEFAULT_APPEARANCE: AppearanceSettings = {
+  language: 'en',
+  canvasBgColor: '#f8fafc',
+  headerFontSize: 'sm',
+  contentFontSize: 'sm'
+};
 
-const initialEdges: Edge[] = [
-  { 
-    id: 'e1-3', 
-    source: '1', 
-    target: '3', 
-    type: 'blueprintEdge', 
-    data: { typeId: 'conn-std' },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } 
-  },
-];
+const STORAGE_KEY = 'blueprint_x_appearance';
 
 function BlueprintStudio() {
-  const [nodes, setNodes] = useState<Node<NodeData>[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [nodes, setNodes] = useState<Node<NodeData>[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [settings, setSettings] = useState<GlobalSettings>(DEFAULT_SETTINGS);
   
+  // Appearance Settings (Persisted locally)
+  const [appearance, setAppearance] = useState<AppearanceSettings>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : DEFAULT_APPEARANCE;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appearance));
+  }, [appearance]);
+
   const [editingNode, setEditingNode] = useState<string | null>(null);
   const [editingEdge, setEditingEdge] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showGeneralSettings, setShowGeneralSettings] = useState(false);
+
+  // Translation helper
+  const t = (key: keyof typeof translations.en) => translations[appearance.language][key] || key;
 
   const onNodesChange = useCallback((changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
   const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
+  
   const onConnect = useCallback((params: Connection) => {
     const defaultType = settings.connectionTypes[0];
     setEdges((eds) => addEdge({ 
@@ -148,21 +137,17 @@ function BlueprintStudio() {
 
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
-    
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(nodes.map(n => ({
       ID: n.id, Label: n.data.label, Type: n.data.cardType, CatID: n.data.categoryId || '',
       X: n.position.x, Y: n.position.y, Columns: n.data.columns?.map(c => c.name).join('|') || '',
       Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || ''
     }))), "Nodes");
-
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(edges.map(e => ({
       ID: e.id, Source: e.source, Target: e.target, Label: e.label || '', TypeID: e.data?.typeId || '', HasArrow: e.markerEnd ? 'YES' : 'NO'
     }))), "Edges");
-
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tableCategories), "TableCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.connectionTypes), "ConnectionTypes");
-
     XLSX.writeFile(wb, "BlueprintX_Project.xlsx");
   };
 
@@ -172,13 +157,10 @@ function BlueprintStudio() {
     const reader = new FileReader();
     reader.onload = (evt) => {
       const workbook = XLSX.read(evt.target?.result, { type: 'binary' });
-      
       const tableCats = workbook.Sheets["TableCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["TableCategories"]) as TableCategory[] : settings.tableCategories;
       const logicCats = workbook.Sheets["LogicCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["LogicCategories"]) as LogicCategory[] : settings.logicCategories;
       const connTypes = workbook.Sheets["ConnectionTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ConnectionTypes"]) as ConnectionType[] : settings.connectionTypes;
-      
       setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes });
-
       const nodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
       setNodes(nodesRaw.map(n => ({
         id: String(n.ID), type: 'blueprintNode', position: { x: Number(n.X), y: Number(n.Y) },
@@ -188,7 +170,6 @@ function BlueprintStudio() {
           description: n.Desc, bulletPoints: n.Bullets ? n.Bullets.split('|') : []
         }
       })));
-
       const edgesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Edges"]) as any[];
       setEdges(edgesRaw.map(e => {
         const cType = connTypes.find(t => t.id === e.TypeID);
@@ -203,15 +184,15 @@ function BlueprintStudio() {
   };
 
   const nodesWithActions = useMemo(() => nodes.map(n => ({
-    ...n, data: { ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), settings }
-  })), [nodes, settings]);
+    ...n, data: { ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), settings, appearance }
+  })), [nodes, settings, appearance]);
 
   const edgesWithActions = useMemo(() => edges.map(e => ({
     ...e, data: { ...e.data, onEdit: setEditingEdge, onDelete: (id: string) => setEdges(eds => eds.filter(edge => edge.id !== id)), settings }
   })), [edges, settings]);
 
   return (
-    <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50 relative">
+    <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50 relative" style={{ backgroundColor: appearance.canvasBgColor }}>
       <aside className="w-72 h-full bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="p-6 border-b border-slate-50 flex flex-col gap-4">
           <div className="flex items-center gap-3">
@@ -221,47 +202,51 @@ function BlueprintStudio() {
             </div>
             <div>
               <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none uppercase">Blueprint-X</h1>
-              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1.5">Documentation</p>
+              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1.5">{t('documentation')}</p>
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-8">
           <section className="flex flex-col gap-4">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Studio Canvas</h2>
+            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">{t('studio_canvas')}</h2>
             <div className="flex flex-col gap-2">
               <button onClick={() => addNode(NodeCardType.TABLE)} className="group flex items-center gap-3 px-4 py-3 bg-white border border-slate-100 text-slate-700 rounded-xl hover:border-blue-200 hover:bg-blue-50/50 transition-all text-sm font-semibold shadow-sm hover:shadow-md">
                 <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors"><Plus size={16} /></div>
-                Data Table
+                {t('data_table')}
               </button>
               <button onClick={() => addNode(NodeCardType.LOGIC_NOTE)} className="group flex items-center gap-3 px-4 py-3 bg-white border border-slate-100 text-slate-700 rounded-xl hover:border-purple-200 hover:bg-purple-50/50 transition-all text-sm font-semibold shadow-sm hover:shadow-md">
                 <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition-colors"><Plus size={16} /></div>
-                Logic Node
+                {t('logic_node')}
               </button>
             </div>
           </section>
 
           <section className="flex flex-col gap-4">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Configuration</h2>
+            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">{t('configuration')}</h2>
             <div className="flex flex-col gap-1">
               <button onClick={() => setShowSettings(true)} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
                 <Settings2 size={18} />
-                <span>Global Config</span>
+                <span>{t('global_config')}</span>
               </button>
               <div className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50">
                 <Layers size={18} />
-                <span>Auto-Align</span>
+                <span>{t('auto_align')}</span>
               </div>
+              <button onClick={() => setShowGeneralSettings(true)} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
+                <Sliders size={18} />
+                <span>{t('general_setting')}</span>
+              </button>
             </div>
           </section>
         </div>
 
         <div className="p-6 border-t border-slate-50 flex flex-col gap-3">
           <button onClick={exportToExcel} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-semibold text-xs shadow-md shadow-slate-100">
-            <Download size={14} /> Export Project
+            <Download size={14} /> {t('export_project')}
           </button>
           <label className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-all font-semibold text-xs cursor-pointer">
-            <Upload size={14} /> Import .xlsx
+            <Upload size={14} /> {t('import_xlsx')}
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
           </label>
         </div>
@@ -277,15 +262,13 @@ function BlueprintStudio() {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
-          className="bg-slate-50"
+          className="bg-transparent"
           defaultEdgeOptions={{ type: 'blueprintEdge' }}
         >
           <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
           <Controls position="bottom-right" />
         </ReactFlow>
-        
-        {/* Legendary Visual Key */}
-        <Legend settings={settings} />
+        <Legend settings={settings} language={appearance.language} />
       </main>
 
       {editingNode && (
@@ -294,6 +277,7 @@ function BlueprintStudio() {
           settings={settings}
           onClose={() => setEditingNode(null)}
           onSave={(data) => handleSaveNode(editingNode, data)}
+          language={appearance.language}
         />
       )}
 
@@ -303,6 +287,7 @@ function BlueprintStudio() {
           settings={settings}
           onClose={() => setEditingEdge(null)}
           onSave={(data) => handleSaveEdge(editingEdge, data)}
+          language={appearance.language}
         />
       )}
 
@@ -311,6 +296,15 @@ function BlueprintStudio() {
           settings={settings}
           onClose={() => setShowSettings(false)}
           onSave={setSettings}
+          language={appearance.language}
+        />
+      )}
+
+      {showGeneralSettings && (
+        <GeneralSettingsModal 
+          appearance={appearance}
+          onClose={() => setShowGeneralSettings(false)}
+          onSave={setAppearance}
         />
       )}
     </div>
