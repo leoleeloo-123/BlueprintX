@@ -70,7 +70,7 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
     return tag ? (
       <div 
         key={tag.id} 
-        className="w-2 h-5 rounded-l shadow-[1px_1px_3px_rgba(0,0,0,0.1)] border-y border-l border-white/20" 
+        className="w-4 h-6 rounded-l-md shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/30" 
         style={{ backgroundColor: tag.color }}
         title={tag.name}
       />
@@ -79,8 +79,8 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   return (
     <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
-      {/* Visual Tag Tabs - Protruding from the left side */}
-      <div className="absolute top-10 left-0 -translate-x-full flex flex-col gap-1 pointer-events-none z-10">
+      {/* Visual Tag Tabs - Moved further down to align with content part and increased width */}
+      <div className="absolute top-14 left-0 -translate-x-full flex flex-col gap-1.5 pointer-events-none z-10">
         {tagIndicators}
       </div>
 
