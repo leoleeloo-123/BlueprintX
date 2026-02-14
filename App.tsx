@@ -61,7 +61,8 @@ const DEFAULT_APPEARANCE: AppearanceSettings = {
   headerFontSize: 'sm',
   contentFontSize: 'sm',
   userName: 'User',
-  organizationName: 'Org'
+  organizationName: 'Org',
+  isLegendExpanded: true
 };
 
 const PROJECT_STORAGE_KEY = 'blueprint_x_project_v1';
@@ -372,7 +373,7 @@ function BlueprintStudio() {
           <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
           <Controls position="bottom-right" />
         </ReactFlow>
-        <Legend settings={settings} language={appearance.language} />
+        <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
       </main>
 
       {editingNode && (

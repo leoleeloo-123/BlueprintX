@@ -14,6 +14,7 @@ export interface AppearanceSettings {
   contentFontSize: FontSizeScale;
   userName: string;
   organizationName: string;
+  isLegendExpanded: boolean;
 }
 
 export interface TableColumn {
