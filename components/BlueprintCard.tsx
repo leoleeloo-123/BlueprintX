@@ -64,23 +64,27 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   const handleClasses = `!w-4 !h-4 !bg-slate-400 !border-2 !border-white shadow-sm transition-all duration-200 hover:scale-125 hover:!bg-blue-500 z-50 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
 
-  // Resolve Tag UI components as side tabs
+  // Resolve Tag UI components as side tabs that expand on hover
   const tagIndicators = (data.tags || []).map(tagId => {
     const tag = data.settings?.tags.find(t => t.id === tagId);
     return tag ? (
       <div 
         key={tag.id} 
-        className="w-4 h-6 rounded-l-md shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/30" 
+        className="flex items-center justify-end h-6 rounded-l-md shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/30 transition-all duration-300 w-3 group-hover:w-auto group-hover:min-w-[60px] group-hover:px-2 group-hover:shadow-[-4px_2px_8px_rgba(0,0,0,0.15)]" 
         style={{ backgroundColor: tag.color }}
         title={tag.name}
-      />
+      >
+        <span className="text-white text-[8px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+          {tag.name}
+        </span>
+      </div>
     ) : null;
   });
 
   return (
     <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
-      {/* Visual Tag Tabs - Moved further down to align with content part and increased width */}
-      <div className="absolute top-14 left-0 -translate-x-full flex flex-col gap-1.5 pointer-events-none z-10">
+      {/* Visual Tag Tabs - Protruding from the left and expanding on group hover */}
+      <div className="absolute top-14 right-full flex flex-col items-end gap-1.5 pointer-events-none z-10">
         {tagIndicators}
       </div>
 
