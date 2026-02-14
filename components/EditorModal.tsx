@@ -14,10 +14,21 @@ interface EditorModalProps {
 export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClose, onSave }) => {
   const [label, setLabel] = useState(node.data.label);
   const [cardType, setCardType] = useState<NodeCardType>(node.data.cardType);
-  const [categoryId, setCategoryId] = useState(node.data.categoryId || settings.tableCategories[0].id);
+  
+  // Determine initial category ID based on card type
+  const initialCatId = node.data.categoryId || (
+    cardType === NodeCardType.TABLE 
+      ? (settings.tableCategories.find(c => c.isDefault) || settings.tableCategories[0]).id
+      : (settings.logicCategories.find(c => c.isDefault) || settings.logicCategories[0]).id
+  );
+  
+  const [categoryId, setCategoryId] = useState(initialCatId);
   const [columns, setColumns] = useState<TableColumn[]>(node.data.columns || []);
   const [description, setDescription] = useState(node.data.description || '');
   const [bulletPoints, setBulletPoints] = useState<string[]>(node.data.bulletPoints || []);
+
+  const isTable = cardType === NodeCardType.TABLE;
+  const isLogic = cardType === NodeCardType.LOGIC_NOTE;
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -33,20 +44,26 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Component Identity</label>
               <input type="text" value={label} onChange={e => setLabel(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
-            {cardType === NodeCardType.TABLE && (
+            {(isTable || isLogic) && (
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Tag size={10} /> Category</label>
                 <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
-                  {settings.tableCategories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
+                  {isTable ? (
+                    settings.tableCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))
+                  ) : (
+                    settings.logicCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))
+                  )}
                 </select>
               </div>
             )}
           </div>
 
           <div className="pt-6 border-t border-slate-100">
-            {cardType === NodeCardType.TABLE ? (
+            {isTable ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700">Fields & Schema</span><button onClick={() => setColumns([...columns, { id: Date.now().toString(), name: 'New Field' }])} className="text-xs font-bold text-blue-600 flex items-center gap-1"><Plus size={14} /> Add Field</button></div>
                 <div className="space-y-2">

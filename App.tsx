@@ -19,7 +19,7 @@ import ReactFlow, {
 import { Download, Upload, Plus, FileSpreadsheet, Layers, Settings2, Info, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType } from './types.ts';
+import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory } from './types.ts';
 import { BlueprintCard } from './components/BlueprintCard.tsx';
 import { BlueprintEdge } from './components/BlueprintEdge.tsx';
 import { EditorModal } from './components/EditorModal.tsx';
@@ -35,6 +35,11 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     { id: 'cat-std', name: 'Standard Table', color: '#2563eb', isDefault: true },
     { id: 'cat-src', name: 'Source Data', color: '#16a34a' },
     { id: 'cat-tmp', name: 'Draft/Workings', color: '#9333ea' }
+  ],
+  logicCategories: [
+    { id: 'log-std', name: 'Standard Logic', color: '#9333ea', isDefault: true },
+    { id: 'log-rule', name: 'Validation Rule', color: '#dc2626' },
+    { id: 'log-calc', name: 'Calculation Engine', color: '#0891b2' }
   ],
   connectionTypes: [
     { id: 'conn-std', name: 'Standard Flow', color: '#94a3b8', width: 2, dashStyle: 'solid' },
@@ -62,6 +67,7 @@ const initialNodes: Node<NodeData>[] = [
     data: { 
       label: 'Validation Logic', 
       cardType: NodeCardType.LOGIC_NOTE,
+      categoryId: 'log-rule',
       description: 'Integrates source data.',
       bulletPoints: ['Match IDs']
     },
@@ -118,7 +124,13 @@ function BlueprintStudio() {
 
   const addNode = (type: NodeCardType) => {
     const id = Date.now().toString();
-    const defaultCat = settings.tableCategories.find(c => c.isDefault) || settings.tableCategories[0];
+    let defaultCatId = undefined;
+    if (type === NodeCardType.TABLE) {
+      defaultCatId = (settings.tableCategories.find(c => c.isDefault) || settings.tableCategories[0]).id;
+    } else if (type === NodeCardType.LOGIC_NOTE) {
+      defaultCatId = (settings.logicCategories.find(c => c.isDefault) || settings.logicCategories[0]).id;
+    }
+    
     setNodes((nds) => nds.concat({
       id,
       type: 'blueprintNode',
@@ -126,7 +138,7 @@ function BlueprintStudio() {
       data: { 
         label: `New ${type.toLowerCase()}`, 
         cardType: type,
-        categoryId: type === NodeCardType.TABLE ? defaultCat.id : undefined,
+        categoryId: defaultCatId,
         columns: type === NodeCardType.TABLE ? [{ id: '1', name: 'New Field' }] : [],
         description: '',
         bulletPoints: []
@@ -148,6 +160,7 @@ function BlueprintStudio() {
     }))), "Edges");
 
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tableCategories), "TableCategories");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.connectionTypes), "ConnectionTypes");
 
     XLSX.writeFile(wb, "BlueprintX_Project.xlsx");
@@ -161,9 +174,10 @@ function BlueprintStudio() {
       const workbook = XLSX.read(evt.target?.result, { type: 'binary' });
       
       const tableCats = workbook.Sheets["TableCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["TableCategories"]) as TableCategory[] : settings.tableCategories;
+      const logicCats = workbook.Sheets["LogicCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["LogicCategories"]) as LogicCategory[] : settings.logicCategories;
       const connTypes = workbook.Sheets["ConnectionTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ConnectionTypes"]) as ConnectionType[] : settings.connectionTypes;
       
-      setSettings({ tableCategories: tableCats, connectionTypes: connTypes });
+      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes });
 
       const nodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
       setNodes(nodesRaw.map(n => ({

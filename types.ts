@@ -17,6 +17,13 @@ export interface TableCategory {
   isDefault?: boolean;
 }
 
+export interface LogicCategory {
+  id: string;
+  name: string;
+  color: string;
+  isDefault?: boolean;
+}
+
 export interface ConnectionType {
   id: string;
   name: string;
@@ -28,7 +35,7 @@ export interface ConnectionType {
 export interface NodeData {
   label: string;
   cardType: NodeCardType;
-  categoryId?: string; // Reference to TableCategory
+  categoryId?: string; // Reference to TableCategory or LogicCategory
   columns?: TableColumn[];
   description?: string;
   bulletPoints?: string[];
@@ -46,6 +53,7 @@ export interface EdgeData {
 
 export interface GlobalSettings {
   tableCategories: TableCategory[];
+  logicCategories: LogicCategory[];
   connectionTypes: ConnectionType[];
 }
 

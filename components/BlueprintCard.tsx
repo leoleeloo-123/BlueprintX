@@ -6,13 +6,20 @@ import { NodeData, NodeCardType, GlobalSettings } from '../types.ts';
 
 export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & { settings: GlobalSettings }>) => {
   const isTable = data.cardType === NodeCardType.TABLE;
+  const isLogic = data.cardType === NodeCardType.LOGIC_NOTE;
   
   // Resolve dynamic category color
-  const category = data.settings?.tableCategories.find(c => c.id === data.categoryId);
-  const headerColor = isTable && category ? category.color : (data.cardType === NodeCardType.LOGIC_NOTE ? '#9333ea' : '#ea580c');
+  let headerColor = '#ea580c'; // Default for reports
+  if (isTable) {
+    const category = data.settings?.tableCategories.find(c => c.id === data.categoryId);
+    headerColor = category ? category.color : '#2563eb';
+  } else if (isLogic) {
+    const category = data.settings?.logicCategories.find(c => c.id === data.categoryId);
+    headerColor = category ? category.color : '#9333ea';
+  }
 
   const getTheme = () => {
-    const baseIcon = isTable ? <Database size={14} /> : (data.cardType === NodeCardType.LOGIC_NOTE ? <FileText size={14} /> : <BarChart2 size={14} />);
+    const baseIcon = isTable ? <Database size={14} /> : (isLogic ? <FileText size={14} /> : <BarChart2 size={14} />);
     return {
       border: selected ? 'border-slate-900 ring-2 ring-slate-100' : 'border-slate-100',
       icon: baseIcon,

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Palette, Link2, Layout } from 'lucide-react';
-import { GlobalSettings, TableCategory, ConnectionType } from '../types.ts';
+import { X, Plus, Trash2, Palette, Link2, Layout, FileText } from 'lucide-react';
+import { GlobalSettings, TableCategory, ConnectionType, LogicCategory } from '../types.ts';
 
 interface SettingsModalProps {
   settings: GlobalSettings;
@@ -11,17 +11,29 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose, onSave }) => {
   const [localSettings, setLocalSettings] = useState<GlobalSettings>(settings);
-  const [activeTab, setActiveTab] = useState<'tables' | 'edges'>('tables');
+  const [activeTab, setActiveTab] = useState<'tables' | 'logic' | 'edges'>('tables');
 
   const addTableCategory = () => {
     const newCat: TableCategory = {
       id: `cat-${Date.now()}`,
-      name: 'New Category',
+      name: 'New Table Category',
       color: '#3b82f6'
     };
     setLocalSettings(prev => ({
       ...prev,
       tableCategories: [...prev.tableCategories, newCat]
+    }));
+  };
+
+  const addLogicCategory = () => {
+    const newCat: LogicCategory = {
+      id: `log-${Date.now()}`,
+      name: 'New Logic Category',
+      color: '#9333ea'
+    };
+    setLocalSettings(prev => ({
+      ...prev,
+      logicCategories: [...prev.logicCategories, newCat]
     }));
   };
 
@@ -60,16 +72,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
               <Layout size={16} /> Table Styles
             </button>
             <button 
+              onClick={() => setActiveTab('logic')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'logic' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              <FileText size={16} /> Logic Styles
+            </button>
+            <button 
               onClick={() => setActiveTab('edges')}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'edges' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'}`}
             >
-              <Link2 size={16} /> Edge Styles
+              <Link2 size={16} /> Link Styles
             </button>
           </div>
 
           {/* Content Area */}
           <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
-            {activeTab === 'tables' ? (
+            {activeTab === 'tables' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">Data Table Categories</h3>
@@ -91,7 +109,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
                   </div>
                 ))}
               </div>
-            ) : (
+            )}
+
+            {activeTab === 'logic' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">Logic Node Categories</h3>
+                  <button onClick={addLogicCategory} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1"><Plus size={14} /> Add New</button>
+                </div>
+                {localSettings.logicCategories.map((cat, idx) => (
+                  <div key={cat.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">
+                    <input type="color" value={cat.color} onChange={e => {
+                      const updated = [...localSettings.logicCategories];
+                      updated[idx].color = e.target.value;
+                      setLocalSettings({ ...localSettings, logicCategories: updated });
+                    }} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent" />
+                    <input type="text" value={cat.name} onChange={e => {
+                      const updated = [...localSettings.logicCategories];
+                      updated[idx].name = e.target.value;
+                      setLocalSettings({ ...localSettings, logicCategories: updated });
+                    }} className="flex-1 bg-transparent text-sm font-medium focus:ring-0 border-0 p-0" />
+                    <button onClick={() => setLocalSettings(p => ({ ...p, logicCategories: p.logicCategories.filter(c => c.id !== cat.id)}))} className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'edges' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">Connection Line Styles</h3>

@@ -21,6 +21,18 @@ export const Legend: React.FC<{ settings: GlobalSettings }> = ({ settings }) => 
         </div>
 
         <div>
+          <span className="text-[9px] font-bold text-slate-300 uppercase block mb-2">Logic Node Types</span>
+          <div className="flex flex-col gap-2">
+            {settings.logicCategories.map(cat => (
+              <div key={cat.id} className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm shadow-sm" style={{ backgroundColor: cat.color }} />
+                <span className="text-[11px] font-semibold text-slate-600 truncate">{cat.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
           <span className="text-[9px] font-bold text-slate-300 uppercase block mb-2">Link Properties</span>
           <div className="flex flex-col gap-2.5">
             {settings.connectionTypes.map(conn => (
