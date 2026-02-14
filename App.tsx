@@ -255,7 +255,14 @@ function BlueprintStudio() {
       DataSourceID: n.data.dataSourceId || ''
     }))), "Nodes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(edges.map(e => ({
-      ID: e.id, Source: e.source, Target: e.target, Label: e.label || '', TypeID: e.data?.typeId || '', HasArrow: e.markerEnd ? 'YES' : 'NO'
+      ID: e.id, 
+      Source: e.source, 
+      Target: e.target, 
+      SourceHandle: e.sourceHandle || '',
+      TargetHandle: e.targetHandle || '',
+      Label: e.label || '', 
+      TypeID: e.data?.typeId || '', 
+      HasArrow: e.markerEnd ? 'YES' : 'NO'
     }))), "Edges");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tableCategories), "TableCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
@@ -309,7 +316,13 @@ function BlueprintStudio() {
       const importedEdges = importedEdgesRaw.map(e => {
         const cType = connTypes.find(t => t.id === e.TypeID);
         return {
-          id: String(e.ID), source: String(e.Source), target: String(e.Target), label: e.Label, type: 'blueprintEdge',
+          id: String(e.ID), 
+          source: String(e.Source), 
+          target: String(e.Target), 
+          sourceHandle: e.SourceHandle || null,
+          targetHandle: e.TargetHandle || null,
+          label: e.Label, 
+          type: 'blueprintEdge',
           data: { typeId: e.TypeID },
           markerEnd: e.HasArrow === 'YES' ? { type: MarkerType.ArrowClosed, color: cType?.color || '#94a3b8' } : undefined
         };
