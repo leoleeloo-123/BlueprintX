@@ -1,7 +1,7 @@
 
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Trash2, Edit3, Database, FileText, BarChart2 } from 'lucide-react';
+import { Trash2, Edit3, Database, FileText, BarChart2, MessageCircle } from 'lucide-react';
 import { NodeData, NodeCardType, GlobalSettings, FontSizeScale } from '../types.ts';
 
 const HEADER_SIZES = { sm: 'text-[10px]', md: 'text-[12px]', lg: 'text-[14px]' };
@@ -31,6 +31,10 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
     accent: headerColor
   };
 
+  const dataSourceName = isTable && data.dataSourceId 
+    ? data.settings?.dataSources.find(s => s.id === data.dataSourceId)?.name 
+    : null;
+
   return (
     <div className={`min-w-[220px] max-w-[320px] rounded-xl overflow-hidden border shadow-sm transition-all duration-200 bg-white ${theme.border}`}>
       <Handle type="target" position={Position.Left} className="!w-2 !h-2" />
@@ -50,16 +54,36 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
       </div>
 
       <div className="p-4 max-h-[400px] overflow-y-auto custom-scrollbar">
-        {isTable ? (
-          <div className="flex flex-col gap-1.5">
-            {data.columns?.map(col => (
-              <div key={col.id} className="flex items-center gap-3 py-1.5 px-2 hover:bg-slate-50 rounded-md transition-colors">
-                <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: headerColor }} />
-                <span className={`text-slate-600 font-bold uppercase tracking-tight ${contentFontSizeClass}`}>{col.name}</span>
+        {isTable && (
+          <>
+            {(dataSourceName || data.comment) && (
+              <div className="mb-4 space-y-2 border-b border-slate-50 pb-3">
+                {dataSourceName && (
+                  <div className="flex items-center gap-2">
+                    <Database size={12} className="text-slate-400" />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{dataSourceName}</span>
+                  </div>
+                )}
+                {data.comment && (
+                  <div className="flex gap-2">
+                    <MessageCircle size={12} className="text-slate-400 mt-0.5 shrink-0" />
+                    <p className={`text-slate-500 italic ${contentFontSizeClass}`}>{data.comment}</p>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        ) : (
+            )}
+            <div className="flex flex-col gap-1.5">
+              {data.columns?.map(col => (
+                <div key={col.id} className="flex items-center gap-3 py-1.5 px-2 hover:bg-slate-50 rounded-md transition-colors">
+                  <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: headerColor }} />
+                  <span className={`text-slate-600 font-bold uppercase tracking-tight ${contentFontSizeClass}`}>{col.name}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        
+        {isLogic && (
           <div className="space-y-3">
             <p className={`text-slate-500 leading-relaxed font-medium ${contentFontSizeClass}`}>{data.description}</p>
             {data.bulletPoints?.map((p, idx) => (

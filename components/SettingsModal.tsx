@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Palette, Link2, Layout, FileText } from 'lucide-react';
-import { GlobalSettings, TableCategory, ConnectionType, LogicCategory } from '../types.ts';
+import { X, Plus, Trash2, Palette, Link2, Layout, FileText, Database } from 'lucide-react';
+import { GlobalSettings, TableCategory, ConnectionType, LogicCategory, DataSource } from '../types.ts';
 import { translations } from '../translations.ts';
 
 interface SettingsModalProps {
@@ -46,6 +46,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
     setLocalSettings(prev => ({ ...prev, connectionTypes: [...prev.connectionTypes, newConn] }));
   };
 
+  const addDataSource = () => {
+    const newSrc: DataSource = {
+      id: `src-${Date.now()}`,
+      name: t('new_data_source')
+    };
+    setLocalSettings(prev => ({ ...prev, dataSources: [...prev.dataSources, newSrc] }));
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
@@ -66,15 +74,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
 
           <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
             {activeTab === 'tables' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-2"><h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('table_categories')}</h3><button onClick={addTableCategory} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1"><Plus size={14} /> {t('add_field')}</button></div>
-                {localSettings.tableCategories.map((cat, idx) => (
-                  <div key={cat.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">
-                    <input type="color" value={cat.color} onChange={e => { const updated = [...localSettings.tableCategories]; updated[idx].color = e.target.value; setLocalSettings({ ...localSettings, tableCategories: updated }); }} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent" />
-                    <input type="text" value={cat.name} onChange={e => { const updated = [...localSettings.tableCategories]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, tableCategories: updated }); }} className="flex-1 bg-transparent text-sm font-medium focus:ring-0 border-0 p-0" />
-                    <button onClick={() => setLocalSettings(p => ({ ...p, tableCategories: p.tableCategories.filter(c => c.id !== cat.id)}))} className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+              <div className="space-y-8">
+                <div>
+                  <div className="flex items-center justify-between mb-2"><h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('table_categories')}</h3><button onClick={addTableCategory} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1"><Plus size={14} /> {t('add_field')}</button></div>
+                  <div className="space-y-2">
+                    {localSettings.tableCategories.map((cat, idx) => (
+                      <div key={cat.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">
+                        <input type="color" value={cat.color} onChange={e => { const updated = [...localSettings.tableCategories]; updated[idx].color = e.target.value; setLocalSettings({ ...localSettings, tableCategories: updated }); }} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent" />
+                        <input type="text" value={cat.name} onChange={e => { const updated = [...localSettings.tableCategories]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, tableCategories: updated }); }} className="flex-1 bg-transparent text-sm font-medium focus:ring-0 border-0 p-0" />
+                        <button onClick={() => setLocalSettings(p => ({ ...p, tableCategories: p.tableCategories.filter(c => c.id !== cat.id)}))} className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div className="pt-6 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-2"><h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('manage_data_sources')}</h3><button onClick={addDataSource} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1"><Plus size={14} /> {t('add_field')}</button></div>
+                  <div className="space-y-2">
+                    {localSettings.dataSources.map((src, idx) => (
+                      <div key={src.id} className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl group">
+                        <div className="p-1.5 bg-slate-50 rounded text-slate-400"><Database size={14} /></div>
+                        <input type="text" value={src.name} onChange={e => { const updated = [...localSettings.dataSources]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, dataSources: updated }); }} className="flex-1 bg-transparent text-sm font-medium focus:ring-0 border-0 p-0" />
+                        <button onClick={() => setLocalSettings(p => ({ ...p, dataSources: p.dataSources.filter(s => s.id !== src.id)}))} className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
             {activeTab === 'logic' && (

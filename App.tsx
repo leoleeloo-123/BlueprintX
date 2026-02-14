@@ -19,7 +19,7 @@ import ReactFlow, {
 import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings } from './types.ts';
+import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource } from './types.ts';
 import { translations } from './translations.ts';
 import { BlueprintCard } from './components/BlueprintCard.tsx';
 import { BlueprintEdge } from './components/BlueprintEdge.tsx';
@@ -47,6 +47,11 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     { id: 'conn-std', name: 'Standard Flow', color: '#94a3b8', width: 2, dashStyle: 'solid' },
     { id: 'conn-crit', name: 'Critical Path', color: '#dc2626', width: 3, dashStyle: 'solid' },
     { id: 'conn-ref', name: 'Reference Only', color: '#64748b', width: 1, dashStyle: 'dashed' }
+  ],
+  dataSources: [
+    { id: 'src-erp', name: 'ERP Data' },
+    { id: 'src-xls', name: 'Excel Data' },
+    { id: 'src-sql', name: 'Database' }
   ]
 };
 
@@ -192,7 +197,9 @@ function BlueprintStudio() {
         categoryId: defaultCatId,
         columns: type === NodeCardType.TABLE ? [{ id: '1', name: 'New Field' }] : [],
         description: '',
-        bulletPoints: []
+        bulletPoints: [],
+        comment: '',
+        dataSourceId: ''
       },
     }));
   };
@@ -202,7 +209,8 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(nodes.map(n => ({
       ID: n.id, Label: n.data.label, Type: n.data.cardType, CatID: n.data.categoryId || '',
       X: n.position.x, Y: n.position.y, Columns: n.data.columns?.map(c => c.name).join('|') || '',
-      Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || ''
+      Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || '',
+      Comment: n.data.comment || '', DataSourceID: n.data.dataSourceId || ''
     }))), "Nodes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(edges.map(e => ({
       ID: e.id, Source: e.source, Target: e.target, Label: e.label || '', TypeID: e.data?.typeId || '', HasArrow: e.markerEnd ? 'YES' : 'NO'
@@ -210,6 +218,7 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tableCategories), "TableCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.connectionTypes), "ConnectionTypes");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
     XLSX.writeFile(wb, "BlueprintX_Project.xlsx");
   };
 
@@ -222,6 +231,7 @@ function BlueprintStudio() {
       const tableCats = workbook.Sheets["TableCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["TableCategories"]) as TableCategory[] : settings.tableCategories;
       const logicCats = workbook.Sheets["LogicCategories"] ? XLSX.utils.sheet_to_json(workbook.Sheets["LogicCategories"]) as LogicCategory[] : settings.logicCategories;
       const connTypes = workbook.Sheets["ConnectionTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ConnectionTypes"]) as ConnectionType[] : settings.connectionTypes;
+      const dataSources = workbook.Sheets["DataSources"] ? XLSX.utils.sheet_to_json(workbook.Sheets["DataSources"]) as DataSource[] : settings.dataSources;
       
       const importedNodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
       const importedNodes = importedNodesRaw.map(n => ({
@@ -229,7 +239,8 @@ function BlueprintStudio() {
         data: {
           label: n.Label, cardType: n.Type, categoryId: n.CatID,
           columns: n.Columns ? n.Columns.split('|').map((name: string, i: number) => ({ id: String(i), name })) : [],
-          description: n.Desc, bulletPoints: n.Bullets ? n.Bullets.split('|') : []
+          description: n.Desc, bulletPoints: n.Bullets ? n.Bullets.split('|') : [],
+          comment: n.Comment || '', dataSourceId: n.DataSourceID || ''
         }
       }));
 
@@ -244,7 +255,7 @@ function BlueprintStudio() {
       });
 
       // Update state which will trigger localStorage sync
-      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes });
+      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes, dataSources: dataSources });
       setNodes(importedNodes);
       setEdges(importedEdges);
       

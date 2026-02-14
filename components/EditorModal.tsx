@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Tag } from 'lucide-react';
+import { X, Plus, Trash2, Tag, Database, MessageSquare } from 'lucide-react';
 import { Node } from 'reactflow';
 import { NodeData, NodeCardType, TableColumn, GlobalSettings } from '../types.ts';
 import { translations } from '../translations.ts';
@@ -27,6 +27,8 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
   const [columns, setColumns] = useState<TableColumn[]>(node.data.columns || []);
   const [description, setDescription] = useState(node.data.description || '');
   const [bulletPoints, setBulletPoints] = useState<string[]>(node.data.bulletPoints || []);
+  const [comment, setComment] = useState(node.data.comment || '');
+  const [dataSourceId, setDataSourceId] = useState(node.data.dataSourceId || '');
 
   const isTable = cardType === NodeCardType.TABLE;
   const isLogic = cardType === NodeCardType.LOGIC_NOTE;
@@ -65,6 +67,24 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
             )}
           </div>
 
+          {isTable && (
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+               <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Database size={10} /> {t('data_source')}</label>
+                <select value={dataSourceId} onChange={e => setDataSourceId(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                  <option value="">{t('select_source')}</option>
+                  {settings.dataSources.map(src => (
+                    <option key={src.id} value={src.id}>{src.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><MessageSquare size={10} /> {t('comment')}</label>
+                <textarea value={comment} onChange={e => setComment(e.target.value)} rows={2} placeholder={t('comment')} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+            </div>
+          )}
+
           <div className="pt-6 border-t border-slate-100">
             {isTable ? (
               <div className="space-y-4">
@@ -95,7 +115,7 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
 
         <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
           <button onClick={onClose} className="px-6 py-2 text-slate-600 text-sm font-bold">{t('cancel')}</button>
-          <button onClick={() => onSave({ label, categoryId, columns, description, bulletPoints })} className="px-8 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg">{t('commit_update')}</button>
+          <button onClick={() => onSave({ label, categoryId, columns, description, bulletPoints, comment, dataSourceId })} className="px-8 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg">{t('commit_update')}</button>
         </div>
       </div>
     </div>

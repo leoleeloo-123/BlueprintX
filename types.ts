@@ -33,6 +33,11 @@ export interface LogicCategory {
   isDefault?: boolean;
 }
 
+export interface DataSource {
+  id: string;
+  name: string;
+}
+
 export interface ConnectionType {
   id: string;
   name: string;
@@ -48,6 +53,8 @@ export interface NodeData {
   columns?: TableColumn[];
   description?: string;
   bulletPoints?: string[];
+  comment?: string; // New field for table comment
+  dataSourceId?: string; // New field for table data source
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
@@ -67,6 +74,7 @@ export interface GlobalSettings {
   tableCategories: TableCategory[];
   logicCategories: LogicCategory[];
   connectionTypes: ConnectionType[];
+  dataSources: DataSource[]; // New global management for data sources
 }
 
 export interface BlueprintProject {

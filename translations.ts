@@ -48,7 +48,13 @@ export const translations = {
     link_styles: "Link Styles",
     apply_config: "Apply Config",
     weight: "Weight",
-    style: "Style"
+    style: "Style",
+    comment: "Comment",
+    data_source: "Data Source",
+    manage_data_sources: "Manage Data Sources",
+    new_data_source: "New Data Source",
+    select_source: "Select Source",
+    none: "None"
   },
   zh: {
     studio_canvas: "画布组件",
@@ -98,6 +104,12 @@ export const translations = {
     link_styles: "连接线样式",
     apply_config: "应用配置",
     weight: "线宽",
-    style: "线型"
+    style: "线型",
+    comment: "备注",
+    data_source: "数据来源",
+    manage_data_sources: "管理数据来源",
+    new_data_source: "新数据来源",
+    select_source: "选择来源",
+    none: "无"
   }
 };
