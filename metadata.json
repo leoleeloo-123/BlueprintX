@@ -1,5 +1,5 @@
 {
-  "name": "Tax Data Blueprint Studio",
-  "description": "A modern, canvas-based documentation tool for tax data modeling featuring custom cards, relational mapping, and high-fidelity Excel import/export.",
+  "name": "Blueprint-X",
+  "description": "A high-performance, canvas-based system documentation tool featuring custom nodes, relational mapping, and portable Excel serialization.",
   "requestFramePermissions": []
 }

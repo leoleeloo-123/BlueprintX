@@ -15,7 +15,7 @@ import ReactFlow, {
   Panel,
   MarkerType
 } from 'reactflow';
-import { Download, Upload, Plus, FileSpreadsheet, Layers, Settings2, Info } from 'lucide-react';
+import { Download, Upload, Plus, FileSpreadsheet, Layers, Settings2, Info, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData } from './types.ts';
@@ -38,13 +38,13 @@ const initialNodes: Node<NodeData>[] = [
     type: 'blueprintNode',
     position: { x: 50, y: 50 },
     data: { 
-      label: 'Sales Transactions', 
+      label: 'Core Data Source', 
       cardType: NodeCardType.TABLE,
       columns: [
-        { id: '1', name: 'Order ID (PK)' },
-        { id: '2', name: 'Amount' },
-        { id: '3', name: 'Tax Rate' },
-        { id: '4', name: 'Date' }
+        { id: '1', name: 'Identity ID (PK)' },
+        { id: '2', name: 'Value' },
+        { id: '3', name: 'Category' },
+        { id: '4', name: 'Timestamp' }
       ]
     },
   },
@@ -53,12 +53,12 @@ const initialNodes: Node<NodeData>[] = [
     type: 'blueprintNode',
     position: { x: 400, y: 50 },
     data: { 
-      label: 'Invoice Ledger', 
+      label: 'Auxiliary Ledger', 
       cardType: NodeCardType.TABLE,
       columns: [
-        { id: '1', name: 'Invoice ID (PK)' },
-        { id: '2', name: 'Total Price' },
-        { id: '3', name: 'Status' }
+        { id: '1', name: 'Reference ID (PK)' },
+        { id: '2', name: 'Status Code' },
+        { id: '3', name: 'Owner' }
       ]
     },
   },
@@ -67,17 +67,17 @@ const initialNodes: Node<NodeData>[] = [
     type: 'blueprintNode',
     position: { x: 225, y: 300 },
     data: { 
-      label: 'VAT Calculation', 
+      label: 'Validation Logic', 
       cardType: NodeCardType.LOGIC_NOTE,
-      description: 'Calculates the output tax by applying the standard rate to the net sales amount.',
-      bulletPoints: ['Standard Rate: 20%', 'Exclude Exempt Sales']
+      description: 'Integrates source data with ledger references to ensure consistency and compute derived states.',
+      bulletPoints: ['Match by Identity ID', 'Apply Transformation Rule #4', 'Flag Discrepancies']
     },
   }
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'e1-3', source: '1', target: '3', label: 'source data', type: 'blueprintEdge', markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } },
-  { id: 'e2-3', source: '2', target: '3', label: 'reconciliation', type: 'blueprintEdge', markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } },
+  { id: 'e1-3', source: '1', target: '3', label: 'primary stream', type: 'blueprintEdge', markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } },
+  { id: 'e2-3', source: '2', target: '3', label: 'reference link', type: 'blueprintEdge', markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } },
 ];
 
 function BlueprintStudio() {
@@ -157,8 +157,8 @@ function BlueprintStudio() {
       data: { 
         label: `New ${type.toLowerCase().replace('_', ' ')}`, 
         cardType: type,
-        columns: type === NodeCardType.TABLE ? [{ id: '1', name: 'New Column' }] : [],
-        description: type === NodeCardType.LOGIC_NOTE ? 'Describe your logic here...' : '',
+        columns: type === NodeCardType.TABLE ? [{ id: '1', name: 'New Field' }] : [],
+        description: type === NodeCardType.LOGIC_NOTE ? 'Define logic here...' : '',
         bulletPoints: []
       },
     };
@@ -190,7 +190,7 @@ function BlueprintStudio() {
     const es = XLSX.utils.json_to_sheet(edgesSheetData);
     XLSX.utils.book_append_sheet(wb, ns, "Nodes");
     XLSX.utils.book_append_sheet(wb, es, "Edges");
-    XLSX.writeFile(wb, "TaxBlueprint_Project.xlsx");
+    XLSX.writeFile(wb, "BlueprintX_Project.xlsx");
   };
 
   const importFromExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,21 +256,23 @@ function BlueprintStudio() {
   return (
     <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50">
       <aside className="w-72 h-full bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        {/* Sleek Blueprint-X Sidebar Logo */}
         <div className="p-6 border-b border-slate-50 flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200">
-              <FileSpreadsheet size={22} />
+            <div className="w-10 h-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <X size={24} strokeWidth={3} className="relative z-10 animate-in zoom-in-50 duration-500" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-none">Tax Blueprint</h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Studio v1.0</p>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none uppercase">Blueprint-X</h1>
+              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1.5">Documentation</p>
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-8">
           <section className="flex flex-col gap-4">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Create Components</h2>
+            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Studio Canvas</h2>
             <div className="flex flex-col gap-2">
               <button 
                 onClick={() => addNode(NodeCardType.TABLE)}
@@ -288,7 +290,7 @@ function BlueprintStudio() {
                 <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition-colors">
                   <Plus size={16} />
                 </div>
-                Logic Note
+                Logic Node
               </button>
               <button 
                 onClick={() => addNode(NodeCardType.REPORT)}
@@ -297,25 +299,25 @@ function BlueprintStudio() {
                 <div className="p-1.5 bg-orange-100 text-orange-600 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition-colors">
                   <Plus size={16} />
                 </div>
-                Tax Report
+                Output Report
               </button>
             </div>
           </section>
 
           <section className="flex flex-col gap-4">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Canvas Tools</h2>
+            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">Environment</h2>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50">
                 <Layers size={18} />
-                <span>Auto Layout</span>
+                <span>Auto-Align</span>
               </div>
               <div className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50">
                 <Settings2 size={18} />
-                <span>Grid Settings</span>
+                <span>Global Config</span>
               </div>
               <div className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50">
                 <Info size={18} />
-                <span>Help Center</span>
+                <span>Documentation</span>
               </div>
             </div>
           </section>
@@ -331,7 +333,7 @@ function BlueprintStudio() {
           </button>
           <label className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-all font-semibold text-xs cursor-pointer">
             <Upload size={14} />
-            Import (.xlsx)
+            Import .xlsx
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
           </label>
         </div>
@@ -353,7 +355,7 @@ function BlueprintStudio() {
           <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
           <Controls position="bottom-right" />
           <Panel position="top-right" className="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200 flex flex-col gap-2 select-none min-w-[160px] m-4">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Blueprint Status</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Workspace Metrics</span>
             <div className="grid grid-cols-2 gap-6 mt-1">
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-slate-900">{nodes.length}</span>
@@ -361,7 +363,7 @@ function BlueprintStudio() {
               </div>
               <div className="flex flex-col">
                 <span className="text-lg font-bold text-slate-900">{edges.length}</span>
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">Edges</span>
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">Links</span>
               </div>
             </div>
           </Panel>
