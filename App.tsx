@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType } from './types.ts';
@@ -133,9 +133,12 @@ function BlueprintStudio() {
     return DEFAULT_APPEARANCE;
   });
 
-  // Filter State
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string | null>(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // Filter States
+  const [activeTableFilter, setActiveTableFilter] = useState<string | null>(null);
+  const [activeLogicFilter, setActiveLogicFilter] = useState<string | null>(null);
+  const [activeEdgeFilter, setActiveEdgeFilter] = useState<string | null>(null);
+  
+  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | null>(null);
 
   useEffect(() => {
     if (!hasPerformedInitialFit.current && nodes.length > 0) {
@@ -205,7 +208,9 @@ function BlueprintStudio() {
     if (window.confirm(t('reset_confirm'))) {
       setNodes([]);
       setEdges([]);
-      setActiveCategoryFilter(null);
+      setActiveTableFilter(null);
+      setActiveLogicFilter(null);
+      setActiveEdgeFilter(null);
       hasPerformedInitialFit.current = false;
     }
   }, [t]);
@@ -239,27 +244,13 @@ function BlueprintStudio() {
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(nodes.map(n => ({
-      ID: n.id, 
-      Label: n.data.label, 
-      Type: n.data.cardType, 
-      CatID: n.data.categoryId || '',
-      X: n.position.x, 
-      Y: n.position.y, 
+      ID: n.id, Label: n.data.label, Type: n.data.cardType, CatID: n.data.categoryId || '', X: n.position.x, Y: n.position.y, 
       Columns: n.data.columns?.map(c => `${c.name}:${c.typeId || ''}:${c.isKey ? 'K' : ''}`).join('|') || '',
-      Desc: n.data.description || '', 
-      Bullets: n.data.bulletPoints?.join('|') || '',
-      Comment: n.data.comment || '', 
-      DataSourceID: n.data.dataSourceId || ''
+      Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || '', Comment: n.data.comment || '', DataSourceID: n.data.dataSourceId || ''
     }))), "Nodes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(edges.map(e => ({
-      ID: e.id, 
-      Source: e.source, 
-      Target: e.target, 
-      SourceHandle: e.sourceHandle || '',
-      TargetHandle: e.targetHandle || '',
-      Label: e.label || '', 
-      TypeID: e.data?.typeId || '', 
-      HasArrow: e.markerEnd ? 'YES' : 'NO'
+      ID: e.id, Source: e.source, Target: e.target, SourceHandle: e.sourceHandle || '', TargetHandle: e.targetHandle || '',
+      Label: e.label || '', TypeID: e.data?.typeId || '', HasArrow: e.markerEnd ? 'YES' : 'NO'
     }))), "Edges");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tableCategories), "TableCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
@@ -268,17 +259,7 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
 
     const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const min = String(now.getMinutes()).padStart(2, '0');
-    
-    const org = (appearance.organizationName || 'Org').replace(/\s+/g, '_');
-    const user = (appearance.userName || 'User').replace(/\s+/g, '_');
-    const timestamp = `${yy}-${mm}-${dd}_${hh}${min}`;
-    const filename = `BlueprintX_${org}_${user}_${timestamp}.xlsx`;
-
+    const filename = `BlueprintX_${now.getTime()}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
 
@@ -312,28 +293,18 @@ function BlueprintStudio() {
       const importedEdges = importedEdgesRaw.map(e => {
         const cType = connTypes.find(t => t.id === e.TypeID);
         return {
-          id: String(e.ID), 
-          source: String(e.Source), 
-          target: String(e.Target), 
-          sourceHandle: e.SourceHandle || null,
-          targetHandle: e.TargetHandle || null,
-          label: e.Label, 
-          type: 'blueprintEdge',
-          data: { typeId: e.TypeID },
+          id: String(e.ID), source: String(e.Source), target: String(e.Target), sourceHandle: e.SourceHandle || null, targetHandle: e.TargetHandle || null,
+          label: e.Label, type: 'blueprintEdge', data: { typeId: e.TypeID },
           markerEnd: e.HasArrow === 'YES' ? { type: MarkerType.ArrowClosed, color: cType?.color || '#94a3b8' } : undefined
         };
       });
 
-      setSettings({ 
-        tableCategories: tableCats, 
-        logicCategories: logicCats, 
-        connectionTypes: connTypes, 
-        dataSources: dataSources,
-        fieldTypes: fTypes
-      });
+      setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes, dataSources, fieldTypes: fTypes });
       setNodes(importedNodes);
       setEdges(importedEdges);
-      setActiveCategoryFilter(null);
+      setActiveTableFilter(null);
+      setActiveLogicFilter(null);
+      setActiveEdgeFilter(null);
       
       setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50);
     };
@@ -342,36 +313,39 @@ function BlueprintStudio() {
 
   const nodesWithActions = useMemo(() => nodes.map(n => ({
     ...n, data: { 
-      ...n.data, 
-      onEdit: setEditingNode, 
-      onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
-      settings, 
-      appearance,
-      activeCategoryFilter
+      ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
+      settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter
     }
-  })), [nodes, settings, appearance, activeCategoryFilter]);
+  })), [nodes, settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter]);
 
   const edgesWithActions = useMemo(() => edges.map(e => {
     const sourceNode = nodes.find(n => n.id === e.source);
     const targetNode = nodes.find(n => n.id === e.target);
     return {
       ...e, data: { 
-        ...e.data, 
-        onEdit: setEditingEdge, 
-        onDelete: (id: string) => setEdges(eds => eds.filter(edge => edge.id !== id)), 
-        settings,
-        activeCategoryFilter,
-        sourceCategoryId: sourceNode?.data.categoryId,
-        targetCategoryId: targetNode?.data.categoryId
+        ...e.data, onEdit: setEditingEdge, onDelete: (id: string) => setEdges(eds => eds.filter(edge => edge.id !== id)), 
+        settings, activeTableFilter, activeLogicFilter, activeEdgeFilter,
+        sourceCategoryId: sourceNode?.data.categoryId, targetCategoryId: targetNode?.data.categoryId
       }
     };
-  }), [edges, settings, activeCategoryFilter, nodes]);
+  }), [edges, settings, activeTableFilter, activeLogicFilter, activeEdgeFilter, nodes]);
 
-  const selectedFilterName = useMemo(() => {
-    if (!activeCategoryFilter) return translations[appearance.language]['all'] || 'All';
-    const cat = settings.tableCategories.find(c => c.id === activeCategoryFilter);
-    return cat ? cat.name : (translations[appearance.language]['all'] || 'All');
-  }, [activeCategoryFilter, settings.tableCategories, appearance.language]);
+  const getFilterName = (type: 'table' | 'logic' | 'edge') => {
+    const lang = appearance.language;
+    if (type === 'table') {
+      if (!activeTableFilter) return t('all');
+      return settings.tableCategories.find(c => c.id === activeTableFilter)?.name || t('all');
+    }
+    if (type === 'logic') {
+      if (!activeLogicFilter) return t('all');
+      return settings.logicCategories.find(c => c.id === activeLogicFilter)?.name || t('all');
+    }
+    if (type === 'edge') {
+      if (!activeEdgeFilter) return t('all');
+      return settings.connectionTypes.find(c => c.id === activeEdgeFilter)?.name || t('all');
+    }
+    return t('all');
+  };
 
   return (
     <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50 relative" style={{ backgroundColor: appearance.canvasBgColor }}>
@@ -439,40 +413,91 @@ function BlueprintStudio() {
 
       <main className="flex-1 min-h-0 relative">
         {/* Canvas View Filters */}
-        <div className="absolute top-6 left-6 z-30 flex flex-col gap-2">
+        <div className="absolute top-6 left-6 z-30 flex gap-3">
+          {/* Table Filter */}
           <div className="relative">
             <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group"
+              onClick={() => setOpenFilterType(openFilterType === 'table' ? null : 'table')}
+              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTableFilter ? 'ring-2 ring-blue-400 border-transparent' : ''}`}
             >
-              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors">
-                <Filter size={14} />
+              <div className="p-1 bg-blue-100 rounded-full text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <Database size={14} />
               </div>
               <div className="flex flex-col items-start pr-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Filter Category</span>
-                <span className="text-xs font-bold text-slate-700">{selectedFilterName}</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('data_table')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('table')}</span>
               </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'table' ? 'rotate-180' : ''}`} />
             </button>
-            
-            {isFilterOpen && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                <button 
-                  onClick={() => { setActiveCategoryFilter(null); setIsFilterOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeCategoryFilter ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                >
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-                  {t('all') || 'All'}
+            {openFilterType === 'table' && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <button onClick={() => { setActiveTableFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeTableFilter ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
                 </button>
                 <div className="h-px bg-slate-50 my-1 mx-4" />
                 {settings.tableCategories.map(cat => (
-                  <button 
-                    key={cat.id}
-                    onClick={() => { setActiveCategoryFilter(cat.id); setIsFilterOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeCategoryFilter === cat.id ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}
-                  >
-                    <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: cat.color }} />
-                    {cat.name}
+                  <button key={cat.id} onClick={() => { setActiveTableFilter(cat.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTableFilter === cat.id ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Logic Filter */}
+          <div className="relative">
+            <button 
+              onClick={() => setOpenFilterType(openFilterType === 'logic' ? null : 'logic')}
+              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeLogicFilter ? 'ring-2 ring-purple-400 border-transparent' : ''}`}
+            >
+              <div className="p-1 bg-purple-100 rounded-full text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <FileText size={14} />
+              </div>
+              <div className="flex flex-col items-start pr-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('logic_node')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('logic')}</span>
+              </div>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'logic' ? 'rotate-180' : ''}`} />
+            </button>
+            {openFilterType === 'logic' && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <button onClick={() => { setActiveLogicFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeLogicFilter ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
+                </button>
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                {settings.logicCategories.map(cat => (
+                  <button key={cat.id} onClick={() => { setActiveLogicFilter(cat.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeLogicFilter === cat.id ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Edge Filter */}
+          <div className="relative">
+            <button 
+              onClick={() => setOpenFilterType(openFilterType === 'edge' ? null : 'edge')}
+              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeEdgeFilter ? 'ring-2 ring-slate-400 border-transparent' : ''}`}
+            >
+              <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-600 group-hover:text-white transition-colors">
+                <Link2 size={14} />
+              </div>
+              <div className="flex flex-col items-start pr-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('link_classification')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('edge')}</span>
+              </div>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'edge' ? 'rotate-180' : ''}`} />
+            </button>
+            {openFilterType === 'edge' && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <button onClick={() => { setActiveEdgeFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeEdgeFilter ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
+                </button>
+                <div className="h-px bg-slate-50 my-1 mx-4" />
+                {settings.connectionTypes.map(conn => (
+                  <button key={conn.id} onClick={() => { setActiveEdgeFilter(conn.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeEdgeFilter === conn.id ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
+                    <div className="w-3 h-px border-t border-slate-400" style={{ borderColor: conn.color, borderWidth: 2 }} />{conn.name}
                   </button>
                 ))}
               </div>
@@ -504,39 +529,24 @@ function BlueprintStudio() {
 
       {editingNode && (
         <EditorModal 
-          node={nodes.find(n => n.id === editingNode)!} 
-          settings={settings}
-          onClose={() => setEditingNode(null)}
-          onSave={(data) => handleSaveNode(editingNode, data)}
-          language={appearance.language}
+          node={nodes.find(n => n.id === editingNode)!} settings={settings} onClose={() => setEditingNode(null)}
+          onSave={(data) => handleSaveNode(editingNode, data)} language={appearance.language}
         />
       )}
 
       {editingEdge && (
         <EdgeEditorModal
-          edge={edges.find(e => e.id === editingEdge)!}
-          settings={settings}
-          onClose={() => setEditingEdge(null)}
-          onSave={(data) => handleSaveEdge(editingEdge, data)}
-          language={appearance.language}
+          edge={edges.find(e => e.id === editingEdge)!} settings={settings} onClose={() => setEditingEdge(null)}
+          onSave={(data) => handleSaveEdge(editingEdge, data)} language={appearance.language}
         />
       )}
 
       {showSettings && (
-        <SettingsModal 
-          settings={settings}
-          onClose={() => setShowSettings(false)}
-          onSave={setSettings}
-          language={appearance.language}
-        />
+        <SettingsModal settings={settings} onClose={() => setShowSettings(false)} onSave={setSettings} language={appearance.language} />
       )}
 
       {showGeneralSettings && (
-        <GeneralSettingsModal 
-          appearance={appearance}
-          onClose={() => setShowGeneralSettings(false)}
-          onSave={setAppearance}
-        />
+        <GeneralSettingsModal appearance={appearance} onClose={() => setShowGeneralSettings(false)} onSave={setAppearance} />
       )}
     </div>
   );

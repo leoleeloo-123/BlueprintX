@@ -26,8 +26,15 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   const contentFontSizeClass = CONTENT_SIZES[appearance?.contentFontSize || 'sm'];
 
   // Filtering Logic
-  const isFiltered = data.activeCategoryFilter && data.categoryId !== data.activeCategoryFilter;
-  const cardOpacityClass = isFiltered ? 'opacity-20 saturate-50' : 'opacity-100';
+  let isFilteredOut = false;
+  if (isTable && data.activeTableFilter && data.categoryId !== data.activeTableFilter) {
+    isFilteredOut = true;
+  }
+  if (isLogic && data.activeLogicFilter && data.categoryId !== data.activeLogicFilter) {
+    isFilteredOut = true;
+  }
+  
+  const cardOpacityClass = isFilteredOut ? 'opacity-20 saturate-50' : 'opacity-100';
 
   const theme = {
     border: selected ? 'border-slate-900 ring-2 ring-slate-100' : 'border-slate-100',
@@ -58,7 +65,7 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
           <div className="p-1.5 bg-white/20 rounded backdrop-blur-sm flex-shrink-0">{theme.icon}</div>
           <h3 className={`font-bold truncate uppercase tracking-widest ${headerFontSizeClass}`}>{data.label}</h3>
         </div>
-        {!isFiltered && (
+        {!isFilteredOut && (
           <div className="flex items-center gap-1.5 ml-2">
             <button onClick={() => data.onEdit?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Edit3 size={12} /></button>
             <button onClick={() => data.onDelete?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Trash2 size={12} /></button>

@@ -69,7 +69,10 @@ export interface NodeData {
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
   appearance?: AppearanceSettings;
-  activeCategoryFilter?: string | null;
+  // Multi-filter states
+  activeTableFilter?: string | null;
+  activeLogicFilter?: string | null;
+  activeEdgeFilter?: string | null;
 }
 
 export interface EdgeData {
@@ -79,7 +82,10 @@ export interface EdgeData {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
-  activeCategoryFilter?: string | null;
+  // Multi-filter states
+  activeTableFilter?: string | null;
+  activeLogicFilter?: string | null;
+  activeEdgeFilter?: string | null;
   sourceCategoryId?: string;
   targetCategoryId?: string;
 }

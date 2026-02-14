@@ -18,12 +18,31 @@ export const BlueprintEdge = ({
   const dashArray = connType?.dashStyle === 'dashed' ? '5,5' : connType?.dashStyle === 'dotted' ? '2,2' : undefined;
 
   // Filtering Logic for Edges
-  // If a filter is active, and EITHER the source OR target node doesn't match the filter, fade the edge.
-  const isFiltered = data.activeCategoryFilter && 
-                     (data.sourceCategoryId !== data.activeCategoryFilter || 
-                      data.targetCategoryId !== data.activeCategoryFilter);
+  let isFilteredOut = false;
   
-  const edgeOpacity = isFiltered ? 0.1 : 1;
+  // 1. Check specific edge filter
+  if (data.activeEdgeFilter && data.typeId !== data.activeEdgeFilter) {
+    isFilteredOut = true;
+  }
+  
+  // 2. Check if either source or target node is filtered by Table/Logic filters
+  if (data.activeTableFilter) {
+    if (data.sourceCategoryId !== data.activeTableFilter || data.targetCategoryId !== data.activeTableFilter) {
+       // Only fade if BOTH aren't the selected table category? 
+       // Or if EITHER isn't? Usually, if we highlight a category, we want to see connections WITHIN that category.
+       if (data.sourceCategoryId !== data.activeTableFilter || data.targetCategoryId !== data.activeTableFilter) {
+         isFilteredOut = true;
+       }
+    }
+  }
+  
+  if (data.activeLogicFilter) {
+    if (data.sourceCategoryId !== data.activeLogicFilter || data.targetCategoryId !== data.activeLogicFilter) {
+      isFilteredOut = true;
+    }
+  }
+  
+  const edgeOpacity = isFilteredOut ? 0.1 : 1;
 
   return (
     <>
@@ -49,7 +68,7 @@ export const BlueprintEdge = ({
                 {label}
               </div>
             )}
-            {selected && !isFiltered && (
+            {selected && !isFilteredOut && (
               <div className="flex items-center gap-1 bg-white shadow-lg border border-slate-200 rounded-full p-1 animate-in zoom-in-75 duration-200">
                 <button className="p-1 hover:bg-blue-50 text-blue-600 rounded-full" onClick={(e) => { e.stopPropagation(); data.onEdit?.(id); }}><Edit3 size={12} /></button>
                 <div className="w-px h-3 bg-slate-100" />
