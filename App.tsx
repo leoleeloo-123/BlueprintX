@@ -59,7 +59,9 @@ const DEFAULT_APPEARANCE: AppearanceSettings = {
   language: 'en',
   canvasBgColor: '#f8fafc',
   headerFontSize: 'sm',
-  contentFontSize: 'sm'
+  contentFontSize: 'sm',
+  userName: 'User',
+  organizationName: 'Org'
 };
 
 const PROJECT_STORAGE_KEY = 'blueprint_x_project_v1';
@@ -113,7 +115,12 @@ function BlueprintStudio() {
     const saved = localStorage.getItem(APPEARANCE_STORAGE_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Ensure new fields exist for legacy users
+        return { 
+          ...DEFAULT_APPEARANCE, 
+          ...parsed 
+        };
       } catch (e) {
         console.error("Failed to parse saved appearance", e);
       }
@@ -219,7 +226,21 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.connectionTypes), "ConnectionTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
-    XLSX.writeFile(wb, "BlueprintX_Project.xlsx");
+
+    // Construct filename: BlueprintX_organization name_user name_YY-MM-DD_HHMM.xlsx
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    
+    const org = (appearance.organizationName || 'Org').replace(/\s+/g, '_');
+    const user = (appearance.userName || 'User').replace(/\s+/g, '_');
+    const timestamp = `${yy}-${mm}-${dd}_${hh}${min}`;
+    const filename = `BlueprintX_${org}_${user}_${timestamp}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
   };
 
   const importFromExcel = (e: React.ChangeEvent<HTMLInputElement>) => {

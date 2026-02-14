@@ -54,7 +54,9 @@ export const translations = {
     manage_data_sources: "Manage Data Sources",
     new_data_source: "New Data Source",
     select_source: "Select Source",
-    none: "None"
+    none: "None",
+    user_name: "User Name",
+    org_name: "Organization Name"
   },
   zh: {
     studio_canvas: "画布组件",
@@ -110,6 +112,8 @@ export const translations = {
     manage_data_sources: "管理数据来源",
     new_data_source: "新数据来源",
     select_source: "选择来源",
-    none: "无"
+    none: "无",
+    user_name: "用户名",
+    org_name: "组织机构"
   }
 };

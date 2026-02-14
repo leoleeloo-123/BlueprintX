@@ -12,6 +12,8 @@ export interface AppearanceSettings {
   canvasBgColor: string;
   headerFontSize: FontSizeScale;
   contentFontSize: FontSizeScale;
+  userName: string;
+  organizationName: string;
 }
 
 export interface TableColumn {
