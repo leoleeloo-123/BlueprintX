@@ -133,7 +133,15 @@ export const BlueprintEdge = ({
         }} className="nodrag nopan">
           <div className="flex flex-col items-center gap-1">
             {label && (
-              <div className="bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-200 text-[9px] font-black text-slate-600 shadow-sm uppercase tracking-tighter whitespace-nowrap">
+              <div 
+                className="bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-200 text-[9px] font-black text-slate-600 shadow-sm uppercase tracking-tighter"
+                style={{ 
+                  maxWidth: connType?.labelMaxWidth ? `${connType.labelMaxWidth}px` : '150px',
+                  whiteSpace: 'normal',
+                  textAlign: 'center',
+                  wordBreak: 'break-word'
+                }}
+              >
                 {label}
               </div>
             )}

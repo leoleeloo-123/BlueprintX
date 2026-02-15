@@ -58,6 +58,7 @@ export interface ConnectionType {
   width: number;
   dashStyle: 'solid' | 'dashed' | 'dotted';
   labelPosition?: LabelPosition;
+  labelMaxWidth?: number;
 }
 
 export interface Tag {

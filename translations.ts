@@ -80,7 +80,8 @@ export const translations = {
     label_position: "Label Alignment",
     pos_center: "Center",
     pos_source: "Source",
-    pos_target: "Target"
+    pos_target: "Target",
+    label_max_width: "Label Max Width (px)"
   },
   zh: {
     all: "显示全部",
@@ -162,6 +163,7 @@ export const translations = {
     label_position: "标签文本对齐方式",
     pos_center: "居中",
     pos_source: "靠近来源",
-    pos_target: "靠近目标"
+    pos_target: "靠近目标",
+    label_max_width: "标签最大宽度 (px)"
   }
 };

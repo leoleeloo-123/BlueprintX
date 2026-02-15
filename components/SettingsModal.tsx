@@ -42,7 +42,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
       color: '#94a3b8',
       width: 2,
       dashStyle: 'solid',
-      labelPosition: 'center'
+      labelPosition: 'center',
+      labelMaxWidth: 150
     };
     setLocalSettings(prev => ({ ...prev, connectionTypes: [...prev.connectionTypes, newConn] }));
   };
@@ -184,6 +185,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
                           <option value="dashed">Dashed</option>
                           <option value="dotted">Dotted</option>
                         </select>
+                      </div>
+                      <div className="col-span-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">{t('label_max_width')}</label>
+                        <input 
+                          type="number" 
+                          min="50" 
+                          max="500" 
+                          value={conn.labelMaxWidth || 150} 
+                          onChange={e => { 
+                            const updated = [...localSettings.connectionTypes]; 
+                            updated[idx].labelMaxWidth = parseInt(e.target.value) || 150; 
+                            setLocalSettings({ ...localSettings, connectionTypes: updated }); 
+                          }} 
+                          className="w-full text-xs px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-blue-500" 
+                        />
                       </div>
                       <div className="col-span-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">{t('label_position')}</label>
