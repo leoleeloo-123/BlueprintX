@@ -44,9 +44,9 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     { id: 'log-calc', name: 'Calculation Engine', color: '#0891b2' }
   ],
   connectionTypes: [
-    { id: 'conn-std', name: 'Standard Flow', color: '#94a3b8', width: 2, dashStyle: 'solid' },
-    { id: 'conn-crit', name: 'Critical Path', color: '#dc2626', width: 3, dashStyle: 'solid' },
-    { id: 'conn-ref', name: 'Reference Only', color: '#64748b', width: 1, dashStyle: 'dashed' }
+    { id: 'conn-std', name: 'Standard Flow', color: '#94a3b8', width: 2, dashStyle: 'solid', labelPosition: 'center' },
+    { id: 'conn-crit', name: 'Critical Path', color: '#dc2626', width: 3, dashStyle: 'solid', labelPosition: 'center' },
+    { id: 'conn-ref', name: 'Reference Only', color: '#64748b', width: 1, dashStyle: 'dashed', labelPosition: 'center' }
   ],
   dataSources: [
     { id: 'src-erp', name: 'ERP System' },
@@ -442,7 +442,7 @@ function BlueprintStudio() {
       const importedTags = workbook.Sheets["Tags"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Tags"]) as Tag[] : [];
       
       // Import Appearance Settings
-      const appSettingsRaw = workbook.Sheets["Appearance"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Appearance"])[0] : null;
+      const appSettingsRaw = workbook.Sheets["Appearance"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Appearance"])[0] as any : null;
       if (appSettingsRaw) {
         setAppearance({ ...DEFAULT_APPEARANCE, ...appSettingsRaw });
       }

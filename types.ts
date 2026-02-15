@@ -49,12 +49,15 @@ export interface DataSource {
   name: string;
 }
 
+export type LabelPosition = 'center' | 'source' | 'target';
+
 export interface ConnectionType {
   id: string;
   name: string;
   color: string;
   width: number;
   dashStyle: 'solid' | 'dashed' | 'dotted';
+  labelPosition?: LabelPosition;
 }
 
 export interface Tag {

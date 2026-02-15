@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { EdgeProps, getSmoothStepPath, EdgeLabelRenderer, BaseEdge } from 'reactflow';
+import { EdgeProps, getSmoothStepPath, EdgeLabelRenderer, BaseEdge, Position } from 'reactflow';
 import { Edit3, Trash2 } from 'lucide-react';
 import { GlobalSettings } from '../types.ts';
 
@@ -18,6 +18,43 @@ export const BlueprintEdge = ({
   const finalStroke = connType?.color || '#94a3b8';
   const finalWidth = connType?.width || 2;
   const dashArray = connType?.dashStyle === 'dashed' ? '5,5' : connType?.dashStyle === 'dotted' ? '2,2' : undefined;
+
+  // Custom Label Positioning
+  // To ensure the label stays "on the line", we align it to the handle's exit/entry vector
+  let finalLabelX = labelX;
+  let finalLabelY = labelY;
+
+  const OFFSET_DISTANCE = 50; // Distance from the node handle along the path leg
+
+  if (connType?.labelPosition === 'source') {
+    if (sourcePosition === Position.Right) {
+      finalLabelX = sourceX + OFFSET_DISTANCE;
+      finalLabelY = sourceY;
+    } else if (sourcePosition === Position.Left) {
+      finalLabelX = sourceX - OFFSET_DISTANCE;
+      finalLabelY = sourceY;
+    } else if (sourcePosition === Position.Top) {
+      finalLabelX = sourceX;
+      finalLabelY = sourceY - OFFSET_DISTANCE;
+    } else if (sourcePosition === Position.Bottom) {
+      finalLabelX = sourceX;
+      finalLabelY = sourceY + OFFSET_DISTANCE;
+    }
+  } else if (connType?.labelPosition === 'target') {
+    if (targetPosition === Position.Right) {
+      finalLabelX = targetX + OFFSET_DISTANCE;
+      finalLabelY = targetY;
+    } else if (targetPosition === Position.Left) {
+      finalLabelX = targetX - OFFSET_DISTANCE;
+      finalLabelY = targetY;
+    } else if (targetPosition === Position.Top) {
+      finalLabelX = targetX;
+      finalLabelY = targetY - OFFSET_DISTANCE;
+    } else if (targetPosition === Position.Bottom) {
+      finalLabelX = targetX;
+      finalLabelY = targetY + OFFSET_DISTANCE;
+    }
+  }
 
   // Filtering Logic for Edges
   let isFilteredOut = false;
@@ -75,22 +112,22 @@ export const BlueprintEdge = ({
       <EdgeLabelRenderer>
         <div style={{ 
           position: 'absolute', 
-          transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`, 
+          transform: `translate(-50%, -50%) translate(${finalLabelX}px,${finalLabelY}px)`, 
           pointerEvents: 'all',
           opacity: edgeOpacity,
           transition: 'opacity 0.3s'
         }} className="nodrag nopan">
           <div className="flex flex-col items-center gap-1">
             {label && (
-              <div className="bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-200 text-[9px] font-black text-slate-600 shadow-sm uppercase tracking-tighter">
+              <div className="bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-200 text-[9px] font-black text-slate-600 shadow-sm uppercase tracking-tighter whitespace-nowrap">
                 {label}
               </div>
             )}
             {selected && !isFilteredOut && (
               <div className="flex items-center gap-1 bg-white shadow-lg border border-slate-200 rounded-full p-1 animate-in zoom-in-75 duration-200">
-                <button className="p-1 hover:bg-blue-50 text-blue-600 rounded-full" onClick={(e) => { e.stopPropagation(); data.onEdit?.(id); }}><Edit3 size={12} /></button>
+                <button className="p-1 hover:bg-blue-50 text-blue-600 rounded-full" onClick={(e) => { e.stopPropagation(); data.onEdit?.(id); }} title="Edit Edge"><Edit3 size={12} /></button>
                 <div className="w-px h-3 bg-slate-100" />
-                <button className="p-1 hover:bg-red-50 text-red-500 rounded-full" onClick={(e) => { e.stopPropagation(); data.onDelete?.(id); }}><Trash2 size={12} /></button>
+                <button className="p-1 hover:bg-red-50 text-red-500 rounded-full" onClick={(e) => { e.stopPropagation(); data.onDelete?.(id); }} title="Delete Edge"><Trash2 size={12} /></button>
               </div>
             )}
           </div>

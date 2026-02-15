@@ -76,7 +76,11 @@ export const translations = {
     demo_mode: "Demo Mode",
     demo_reset_hint: "Clear canvas to start a new project.",
     max_fields_label: "Max Fields to Show",
-    total_fields: "Total {count} Fields"
+    total_fields: "Total {count} Fields",
+    label_position: "Label Alignment",
+    pos_center: "Center",
+    pos_source: "Source",
+    pos_target: "Target"
   },
   zh: {
     all: "显示全部",
@@ -154,6 +158,10 @@ export const translations = {
     demo_mode: "演示模式",
     demo_reset_hint: "清空画布以开始新项目。",
     max_fields_label: "最大显示字段数",
-    total_fields: "等 {count} 个字段"
+    total_fields: "等 {count} 个字段",
+    label_position: "标签文本对齐方式",
+    pos_center: "居中",
+    pos_source: "靠近来源",
+    pos_target: "靠近目标"
   }
 };

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Palette, Link2, Layout, FileText, Database, Type, Tag as TagIcon } from 'lucide-react';
-import { GlobalSettings, TableCategory, ConnectionType, LogicCategory, DataSource, FieldType, Tag } from '../types.ts';
+import { X, Plus, Trash2, Palette, Link2, Layout, FileText, Database, Type, Tag as TagIcon, AlignCenter, AlignLeft, AlignRight } from 'lucide-react';
+import { GlobalSettings, TableCategory, ConnectionType, LogicCategory, DataSource, FieldType, Tag, LabelPosition } from '../types.ts';
 import { translations } from '../translations.ts';
 
 interface SettingsModalProps {
@@ -41,7 +41,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
       name: t('new_link_type'),
       color: '#94a3b8',
       width: 2,
-      dashStyle: 'solid'
+      dashStyle: 'solid',
+      labelPosition: 'center'
     };
     setLocalSettings(prev => ({ ...prev, connectionTypes: [...prev.connectionTypes, newConn] }));
   };
@@ -164,15 +165,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onClose,
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-2"><h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest text-[10px]">{t('link_styles')}</h3><button onClick={addConnectionType} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded flex items-center gap-1"><Plus size={14} /> {t('add_field')}</button></div>
                 {localSettings.connectionTypes.map((conn, idx) => (
-                  <div key={conn.id} className="p-4 bg-white border border-slate-200 rounded-xl space-y-3 group relative">
+                  <div key={conn.id} className="p-4 bg-white border border-slate-200 rounded-xl space-y-4 group relative shadow-sm">
                     <div className="flex items-center gap-3">
                       <input type="color" value={conn.color} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].color = e.target.value; setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="w-6 h-6 rounded cursor-pointer" />
                       <input type="text" value={conn.name} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="flex-1 font-semibold text-sm border-0 focus:ring-0 p-0" />
                       <button onClick={() => setLocalSettings(p => ({ ...p, connectionTypes: p.connectionTypes.filter(c => c.id !== conn.id)}))} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500"><Trash2 size={16} /></button>
                     </div>
-                    <div className="flex gap-4">
-                      <div className="flex-1"><label className="text-[10px] font-bold text-slate-400 uppercase">{t('weight')}</label><input type="range" min="1" max="5" value={conn.width} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].width = parseInt(e.target.value); setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer" /></div>
-                      <div className="flex-1"><label className="text-[10px] font-bold text-slate-400 uppercase">{t('style')}</label><select value={conn.dashStyle} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].dashStyle = e.target.value as any; setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="w-full text-xs p-1 border border-slate-200 rounded"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option></select></div>
+                    
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">{t('weight')}</label>
+                        <input type="range" min="1" max="5" value={conn.width} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].width = parseInt(e.target.value); setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1.5">{t('style')}</label>
+                        <select value={conn.dashStyle} onChange={e => { const updated = [...localSettings.connectionTypes]; updated[idx].dashStyle = e.target.value as any; setLocalSettings({ ...localSettings, connectionTypes: updated }); }} className="w-full text-xs p-1.5 border border-slate-200 rounded-lg">
+                          <option value="solid">Solid</option>
+                          <option value="dashed">Dashed</option>
+                          <option value="dotted">Dotted</option>
+                        </select>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">{t('label_position')}</label>
+                        <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                          {(['source', 'center', 'target'] as LabelPosition[]).map(pos => (
+                            <button 
+                              key={pos}
+                              onClick={() => {
+                                const updated = [...localSettings.connectionTypes];
+                                updated[idx].labelPosition = pos;
+                                setLocalSettings({ ...localSettings, connectionTypes: updated });
+                              }}
+                              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${conn.labelPosition === pos ? 'bg-white text-slate-900 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                              {pos === 'center' && <AlignCenter size={12} />}
+                              {pos === 'source' && <AlignLeft size={12} />}
+                              {pos === 'target' && <AlignRight size={12} />}
+                              {t(`pos_${pos}` as any)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
