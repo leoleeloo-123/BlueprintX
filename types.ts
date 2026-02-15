@@ -5,6 +5,8 @@ export enum NodeCardType {
   REPORT = 'REPORT'
 }
 
+export type TagPosition = 'left' | 'right' | 'top' | 'bottom';
+
 export type FontSizeScale = 'sm' | 'md' | 'lg';
 
 export interface AppearanceSettings {
@@ -65,6 +67,7 @@ export interface Tag {
   id: string;
   name: string;
   color: string;
+  position?: TagPosition;
 }
 
 export interface NodeData {

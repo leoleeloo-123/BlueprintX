@@ -2,7 +2,7 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Trash2, Edit3, Database, FileText, BarChart2, MessageCircle, Key } from 'lucide-react';
-import { NodeData, NodeCardType, GlobalSettings } from '../types.ts';
+import { NodeData, NodeCardType, GlobalSettings, TagPosition } from '../types.ts';
 import { translations } from '../translations.ts';
 
 const HEADER_SIZES = { sm: 'text-[10px]', md: 'text-[12px]', lg: 'text-[14px]' };
@@ -83,30 +83,67 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   const handleClasses = `!w-4 !h-4 !bg-slate-400 !border-2 !border-white shadow-sm transition-all duration-200 hover:scale-125 hover:!bg-blue-500 z-50 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
 
-  const tagIndicators = (data.tags || []).map(tagId => {
+  // Helper to render individual tag
+  const renderTag = (tagId: string, position: TagPosition) => {
     const tag = data.settings?.tags.find(t => t.id === tagId);
     if (!tag) return null;
 
     const isActiveTag = data.activeTagFilters?.includes(tag.id);
     
+    // Style adjustments based on position
+    let roundingClass = '';
+    let expansionDirection = '';
+    let containerClasses = 'flex items-center shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-white/20 transition-all duration-300 origin-center';
+    let textAlignment = 'leading-none whitespace-nowrap overflow-hidden transition-all duration-300';
+
+    if (position === 'left') {
+      roundingClass = 'rounded-l-lg border-y border-l justify-end';
+      expansionDirection = isActiveTag ? 'w-auto px-3' : 'w-3 group-hover:w-auto group-hover:px-3';
+      textAlignment += isActiveTag ? ' opacity-100 max-w-[120px]' : ' opacity-0 group-hover:opacity-100 group-hover:max-w-[120px] max-w-0';
+      containerClasses += ` h-7 origin-right ${roundingClass} ${expansionDirection}`;
+    } else if (position === 'right') {
+      roundingClass = 'rounded-r-lg border-y border-r justify-start';
+      expansionDirection = isActiveTag ? 'w-auto px-3' : 'w-3 group-hover:w-auto group-hover:px-3';
+      textAlignment += isActiveTag ? ' opacity-100 max-w-[120px]' : ' opacity-0 group-hover:opacity-100 group-hover:max-w-[120px] max-w-0';
+      containerClasses += ` h-7 origin-left ${roundingClass} ${expansionDirection}`;
+    } else if (position === 'top') {
+      roundingClass = 'rounded-t-lg border-x border-t items-start pt-1';
+      expansionDirection = isActiveTag ? 'h-auto py-1.5' : 'h-2 group-hover:h-auto group-hover:py-1.5';
+      textAlignment += isActiveTag ? ' opacity-100 max-h-[20px]' : ' opacity-0 group-hover:opacity-100 group-hover:max-h-[20px] max-h-0';
+      containerClasses += ` w-auto px-3 origin-bottom flex-col ${roundingClass} ${expansionDirection}`;
+    } else if (position === 'bottom') {
+      roundingClass = 'rounded-b-lg border-x border-b items-end pb-1';
+      expansionDirection = isActiveTag ? 'h-auto py-1.5' : 'h-2 group-hover:h-auto group-hover:py-1.5';
+      textAlignment += isActiveTag ? ' opacity-100 max-h-[20px]' : ' opacity-0 group-hover:opacity-100 group-hover:max-h-[20px] max-h-0';
+      containerClasses += ` w-auto px-3 origin-top flex-col ${roundingClass} ${expansionDirection}`;
+    }
+
     return (
       <div 
         key={tag.id} 
-        className={`flex items-center justify-end h-7 rounded-l-lg shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/20 transition-all duration-300 origin-right ${
-          isActiveTag 
-            ? 'w-auto px-3 shadow-[-4px_2px_10px_rgba(0,0,0,0.2)] ring-1 ring-white/30' 
-            : 'w-3 group-hover:w-auto group-hover:px-3 group-hover:shadow-[-4px_2px_10px_rgba(0,0,0,0.2)]'
-        }`} 
+        className={`${containerClasses} ${isActiveTag ? 'shadow-[-4px_2px_10px_rgba(0,0,0,0.2)] ring-1 ring-white/30' : 'group-hover:shadow-[-4px_2px_10px_rgba(0,0,0,0.2)]'}`}
         style={{ backgroundColor: tag.color }}
         title={tag.name}
       >
-        <span className={`text-white text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-300 overflow-hidden leading-none ${
-          isActiveTag ? 'opacity-100 max-w-[120px]' : 'opacity-0 group-hover:opacity-100 group-hover:max-w-[120px] max-w-0'
-        }`}>
+        <span className={`text-white text-[10px] font-bold uppercase tracking-wider ${textAlignment}`}>
           {tag.name}
         </span>
       </div>
     );
+  };
+
+  // Group tags by position
+  const tagsByPosition: Record<TagPosition, string[]> = {
+    left: [],
+    right: [],
+    top: [],
+    bottom: []
+  };
+
+  (data.tags || []).forEach(tagId => {
+    const tag = data.settings?.tags.find(t => t.id === tagId);
+    const pos = tag?.position || 'left';
+    tagsByPosition[pos].push(tagId);
   });
 
   const maxFields = appearance?.maxFieldsToShow ?? 6;
@@ -118,8 +155,18 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   return (
     <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
+      {/* Tag Containers */}
       <div className="absolute top-16 right-full flex flex-col items-end gap-1.5 pointer-events-none z-10">
-        {tagIndicators}
+        {tagsByPosition.left.map(id => renderTag(id, 'left'))}
+      </div>
+      <div className="absolute top-16 left-full flex flex-col items-start gap-1.5 pointer-events-none z-10">
+        {tagsByPosition.right.map(id => renderTag(id, 'right'))}
+      </div>
+      <div className="absolute bottom-full left-4 flex flex-row items-end gap-1.5 pointer-events-none z-10">
+        {tagsByPosition.top.map(id => renderTag(id, 'top'))}
+      </div>
+      <div className="absolute top-full left-4 flex flex-row items-start gap-1.5 pointer-events-none z-10">
+        {tagsByPosition.bottom.map(id => renderTag(id, 'bottom'))}
       </div>
 
       <Handle type="target" position={Position.Top} id="t-t" className={handleClasses} />

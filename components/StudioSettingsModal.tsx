@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { 
   X, Plus, Trash2, Palette, Link2, Layout, FileText, Database, 
   Type, Tag as TagIcon, AlignCenter, AlignLeft, AlignRight,
-  User, Building2, ListOrdered, Globe, Sliders, Settings2
+  User, Building2, ListOrdered, Globe, Sliders, Settings2, ArrowUp, ArrowDown
 } from 'lucide-react';
-import { GlobalSettings, AppearanceSettings, FontSizeScale, TableCategory, LogicCategory, ConnectionType, DataSource, FieldType, Tag, LabelPosition } from '../types.ts';
+import { GlobalSettings, AppearanceSettings, FontSizeScale, TableCategory, LogicCategory, ConnectionType, DataSource, FieldType, Tag, LabelPosition, TagPosition } from '../types.ts';
 import { translations } from '../translations.ts';
 
 interface StudioSettingsModalProps {
@@ -56,7 +56,7 @@ export const StudioSettingsModal: React.FC<StudioSettingsModalProps> = ({
   };
 
   const addTag = () => {
-    const newTag: Tag = { id: `tag-${Date.now()}`, name: t('new_tag'), color: '#10b981' };
+    const newTag: Tag = { id: `tag-${Date.now()}`, name: t('new_tag'), color: '#10b981', position: 'left' };
     setLocalSettings(prev => ({ ...prev, tags: [...(prev.tags || []), newTag] }));
   };
 
@@ -283,12 +283,37 @@ export const StudioSettingsModal: React.FC<StudioSettingsModalProps> = ({
                       <Plus size={14} strokeWidth={3} /> {t('add_field')}
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 gap-2.5">
+                  <div className="grid grid-cols-1 gap-4">
                     {(localSettings.tags || []).map((tag, idx) => (
-                      <div key={tag.id} className="flex items-center gap-4 p-3.5 bg-slate-50/50 border border-slate-200 rounded-2xl group hover:bg-white hover:shadow-sm transition-all">
-                        <input type="color" value={tag.color} onChange={e => { const updated = [...(localSettings.tags || [])]; updated[idx].color = e.target.value; setLocalSettings({ ...localSettings, tags: updated }); }} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent shadow-sm" />
-                        <input type="text" value={tag.name} onChange={e => { const updated = [...(localSettings.tags || [])]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, tags: updated }); }} className="flex-1 bg-transparent text-sm font-bold text-slate-700 border-0 p-0 focus:ring-0" />
-                        <button onClick={() => setLocalSettings(p => ({ ...p, tags: (p.tags || []).filter(t => t.id !== tag.id)}))} className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
+                      <div key={tag.id} className="p-4 bg-slate-50/50 border border-slate-200 rounded-2xl group hover:bg-white hover:shadow-md transition-all space-y-4">
+                        <div className="flex items-center gap-4">
+                          <input type="color" value={tag.color} onChange={e => { const updated = [...(localSettings.tags || [])]; updated[idx].color = e.target.value; setLocalSettings({ ...localSettings, tags: updated }); }} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent shadow-sm" />
+                          <input type="text" value={tag.name} onChange={e => { const updated = [...(localSettings.tags || [])]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, tags: updated }); }} className="flex-1 bg-transparent text-sm font-bold text-slate-700 border-0 p-0 focus:ring-0" />
+                          <button onClick={() => setLocalSettings(p => ({ ...p, tags: (p.tags || []).filter(t => t.id !== tag.id)}))} className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
+                        </div>
+                        
+                        <div className="pt-3 border-t border-slate-100">
+                          <label className="text-[9px] font-black text-slate-400 uppercase block mb-2">{t('tag_position')}</label>
+                          <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-100">
+                            {(['left', 'right', 'top', 'bottom'] as TagPosition[]).map(pos => (
+                              <button 
+                                key={pos} 
+                                onClick={() => { 
+                                  const updated = [...(localSettings.tags || [])]; 
+                                  updated[idx].position = pos; 
+                                  setLocalSettings({ ...localSettings, tags: updated }); 
+                                }} 
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all ${tag.position === pos || (!tag.position && pos === 'left') ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                              >
+                                {pos === 'left' && <AlignLeft size={10} />}
+                                {pos === 'right' && <AlignRight size={10} />}
+                                {pos === 'top' && <ArrowUp size={10} />}
+                                {pos === 'bottom' && <ArrowDown size={10} />}
+                                {t(`pos_${pos}` as any)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
