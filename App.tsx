@@ -583,7 +583,7 @@ function BlueprintStudio() {
       if (type === 'tag') return settings.tags.find(c => c.id === current[0])?.name || t('all');
     }
 
-    return `${current.length}`;
+    return `${current.length} selected`;
   };
 
   const getFilterCount = (type: 'table' | 'logic' | 'edge' | 'tag') => {
@@ -620,23 +620,14 @@ function BlueprintStudio() {
         <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
           {/* Logo & Filter Group */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
-            {/* Branding Logo - Restored & Enhanced Vibrant Colored Gradient Styling */}
-            <div className="flex items-center gap-1.5 lg:gap-3 bg-white/95 backdrop-blur-md px-2 py-1.5 lg:px-4 lg:py-2 rounded-full border border-slate-200 shadow-lg flex-shrink-0 transition-all duration-300 ring-1 ring-slate-100/50">
-              <div className="w-7 h-7 lg:w-9 lg:h-9 bg-gradient-to-br from-indigo-500 via-blue-600 to-slate-900 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group/logo flex-shrink-0 ring-1 ring-white/20">
-                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover/logo:opacity-100 transition-opacity duration-300 shadow-inner"></div>
-                <PackageOpen size={20} strokeWidth={2.5} className="relative z-10 drop-shadow-md" />
-              </div>
-              <h1 className="text-lg lg:text-xl font-black text-slate-900 tracking-tight leading-none hidden xl:block">WhiteBox</h1>
-            </div>
-
             {/* Create Node */}
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} 
-                className={`w-9 h-9 lg:w-11 lg:h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 aspect-square flex-shrink-0 ${openMenuType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}
+                className={`w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 aspect-square flex-shrink-0 ${openMenuType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}
                 title="Add Component"
               >
-                <Plus size={22} />
+                <Plus size={24} strokeWidth={2.5} />
               </button>
               {openMenuType === 'add' && (
                 <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
@@ -654,33 +645,18 @@ function BlueprintStudio() {
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 lg:mx-1 flex-shrink-0" />
 
-            {/* Auto Align - Strictly Responsive Circle */}
-            <button 
-              onClick={handleAutoAlign} 
-              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-blue-100 flex-shrink-0 h-9 lg:h-11 xl:w-auto aspect-square xl:aspect-auto"
-              title={t('auto_align')}
-            >
-              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-colors flex-shrink-0">
-                <Layers size={14} />
-              </div>
-              <div className="flex flex-col items-start pr-1 hidden xl:flex">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('workspace')}</span>
-                <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{t('auto_align')}</span>
-              </div>
-            </button>
-
-            {/* Reset Filters - Strictly Responsive Circle */}
+            {/* Reset Filters - Distinct Rose Color */}
             <button 
               onClick={handleResetFilters} 
-              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100 flex-shrink-0 h-9 lg:h-11 xl:w-auto aspect-square xl:aspect-auto"
+              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto"
               title={t('reset_filters')}
             >
-              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-red-500 group-hover:text-white transition-colors flex-shrink-0">
-                <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+              <div className="p-1.5 bg-rose-50 rounded-full text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-colors flex-shrink-0">
+                <RotateCcw size={16} strokeWidth={2.5} className="group-hover:rotate-[-45deg] transition-transform" />
               </div>
               <div className="flex flex-col items-start pr-1 hidden xl:flex">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('filters_label')}</span>
-                <span className="text-xs font-bold text-slate-700 group-hover:text-red-600 transition-colors">{t('reset_filters')}</span>
+                <span className="text-xs font-bold text-slate-700 group-hover:text-rose-600 transition-colors">{t('reset_filters')}</span>
               </div>
             </button>
 
@@ -689,14 +665,19 @@ function BlueprintStudio() {
               <div className="relative flex-shrink-0" key={type}>
                 <button 
                   onClick={() => setOpenMenuType(openMenuType === type ? null : type)} 
-                  className="flex items-center justify-center gap-1.5 lg:gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-9 lg:h-11 xl:w-auto aspect-square xl:aspect-auto relative"
+                  className={`flex items-center justify-center gap-1.5 lg:gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto relative ${openMenuType === type ? 'ring-2 ring-slate-400/20' : ''}`}
                   title={t(type === 'tag' ? 'tags' : type === 'table' ? 'data_table' : type === 'logic' ? 'logic_node' : 'link_classification')}
                 >
-                  <div className={`p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors flex-shrink-0`}>
-                    {type === 'tag' && <TagIcon size={14} />}
-                    {type === 'table' && <Database size={14} />}
-                    {type === 'logic' && <FileText size={14} />}
-                    {type === 'edge' && <Link2 size={14} />}
+                  <div className={`p-1.5 rounded-full transition-colors flex-shrink-0 ${
+                    type === 'tag' ? 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white' :
+                    type === 'table' ? 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white' :
+                    type === 'logic' ? 'bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white' :
+                    'bg-slate-100 text-slate-600 group-hover:bg-slate-900 group-hover:text-white'
+                  }`}>
+                    {type === 'tag' && <TagIcon size={16} strokeWidth={2.5} />}
+                    {type === 'table' && <Database size={16} strokeWidth={2.5} />}
+                    {type === 'logic' && <FileText size={16} strokeWidth={2.5} />}
+                    {type === 'edge' && <Link2 size={16} strokeWidth={2.5} />}
                   </div>
                   <div className="flex flex-col items-start pr-1 hidden xl:flex">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
@@ -706,9 +687,9 @@ function BlueprintStudio() {
                   </div>
                   <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === type ? 'rotate-180' : ''} hidden xl:block`} />
                   
-                  {/* Fixed Numeric Badge for Mobile Viewport - Anti-stacking fix */}
+                  {/* Fixed Numeric Badge for Mobile Viewport */}
                   {getFilterCount(type) > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white xl:hidden shadow-sm border border-white z-20 leading-none">
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white xl:hidden shadow-sm border border-white z-20 leading-none">
                       {getFilterCount(type)}
                     </span>
                   )}
@@ -726,7 +707,7 @@ function BlueprintStudio() {
                       </div>
                       {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).length === 0 && <Check size={14} className="mt-1 shrink-0 ml-2" />}
                     </button>
-                    {/* Hide All Option - Restored consistently */}
+                    {/* Hide All Option */}
                     <button 
                       onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} 
                       className="w-full flex items-start justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600 text-left"
@@ -757,17 +738,17 @@ function BlueprintStudio() {
             ))}
           </div>
 
-          {/* Right Controls (Settings & I/O Group) - Strictly Responsive Circles */}
+          {/* Right Controls (Settings & I/O Group) */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap shrink-0">
             {/* Import/Export Dropdown */}
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} 
-                className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-9 lg:h-11 xl:w-auto aspect-square xl:aspect-auto"
+                className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto"
                 title="Project Actions"
               >
-                <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors flex-shrink-0">
-                  <ArrowUpDown size={14} />
+                <div className="p-1.5 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors flex-shrink-0">
+                  <ArrowUpDown size={16} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col items-start pr-1 hidden xl:flex">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Project</span>
@@ -798,10 +779,10 @@ function BlueprintStudio() {
             {/* General Settings (Circular Gear) */}
             <button 
               onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
-              className="w-9 h-9 lg:w-11 lg:h-11 flex items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:border-slate-300 transition-all text-slate-600 hover:text-slate-900 group flex-shrink-0 aspect-square"
+              className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:border-slate-300 transition-all text-slate-600 hover:text-slate-900 group flex-shrink-0 aspect-square"
               title={t('general_settings')}
             >
-              <Settings2 size={20} className="group-hover:rotate-45 transition-transform duration-500" />
+              <Settings2 size={22} className="group-hover:rotate-45 transition-transform duration-500" />
             </button>
           </div>
         </div>
