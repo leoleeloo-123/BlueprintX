@@ -583,7 +583,7 @@ function BlueprintStudio() {
       if (type === 'tag') return settings.tags.find(c => c.id === current[0])?.name || t('all');
     }
 
-    return `${current.length} selected`;
+    return `${current.length}`;
   };
 
   const toggleMultiFilter = (id: string, current: string[], setter: (val: string[]) => void) => {
@@ -608,21 +608,26 @@ function BlueprintStudio() {
   return (
     <div className="w-full h-full bg-slate-50 relative overflow-hidden" style={{ backgroundColor: appearance.canvasBgColor }}>
       <main className="w-full h-full relative">
-        {/* Unified Top Toolbar */}
-        <div className="absolute inset-x-0 top-0 p-6 flex items-center justify-between pointer-events-none z-30" ref={toolbarRef}>
+        {/* Unified Responsive Top Toolbar */}
+        <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
           {/* Logo & Filter Group */}
-          <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
             {/* Branding Logo */}
-            <div className="flex items-center gap-3 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-lg mr-3">
-              <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center">
-                <PackageOpen size={20} />
+            <div className="flex items-center gap-1.5 lg:gap-3 bg-white/95 backdrop-blur-md px-2 py-1.5 lg:px-4 lg:py-2 rounded-full border border-slate-200 shadow-lg flex-shrink-0">
+              <div className="w-7 h-7 lg:w-8 lg:h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                <PackageOpen size={18} />
               </div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none">WhiteBox</h1>
+              <h1 className="text-lg lg:text-xl font-black text-slate-900 tracking-tight leading-none hidden xl:block">WhiteBox</h1>
             </div>
 
-            <div className="relative">
-              <button onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} className={`w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openMenuType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}>
-                <Plus size={24} />
+            {/* Create Node */}
+            <div className="relative flex-shrink-0">
+              <button 
+                onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} 
+                className={`w-9 h-9 lg:w-11 lg:h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openMenuType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}
+                title="Add Component"
+              >
+                <Plus size={22} />
               </button>
               {openMenuType === 'add' && (
                 <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
@@ -638,44 +643,60 @@ function BlueprintStudio() {
               )}
             </div>
 
-            <div className="h-6 w-px bg-slate-200 mx-1" />
+            <div className="h-6 w-px bg-slate-200 mx-0.5 lg:mx-1 flex-shrink-0" />
 
-            <button onClick={handleAutoAlign} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-blue-100">
-              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+            {/* Auto Align */}
+            <button 
+              onClick={handleAutoAlign} 
+              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-blue-100 flex-shrink-0 min-w-0 h-9 lg:h-11 xl:w-auto"
+              title={t('auto_align')}
+            >
+              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-colors flex-shrink-0">
                 <Layers size={14} />
               </div>
-              <div className="flex flex-col items-start pr-1">
+              <div className="flex flex-col items-start pr-1 hidden xl:flex">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('workspace')}</span>
                 <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{t('auto_align')}</span>
               </div>
             </button>
 
-            <button onClick={handleResetFilters} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100">
-              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
+            {/* Reset Filters */}
+            <button 
+              onClick={handleResetFilters} 
+              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100 flex-shrink-0 min-w-0 h-9 lg:h-11 xl:w-auto"
+              title={t('reset_filters')}
+            >
+              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-red-500 group-hover:text-white transition-colors flex-shrink-0">
                 <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
               </div>
-              <div className="flex flex-col items-start pr-1">
+              <div className="flex flex-col items-start pr-1 hidden xl:flex">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('filters_label')}</span>
                 <span className="text-xs font-bold text-slate-700 group-hover:text-red-600 transition-colors">{t('reset_filters')}</span>
               </div>
             </button>
 
+            {/* Filter Dropdowns */}
             {['tag', 'table', 'logic', 'edge'].map((type: any) => (
-              <div className="relative" key={type}>
-                <button onClick={() => setOpenMenuType(openMenuType === type ? null : type)} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group">
-                  <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+              <div className="relative flex-shrink-0" key={type}>
+                <button 
+                  onClick={() => setOpenMenuType(openMenuType === type ? null : type)} 
+                  className="flex items-center justify-center gap-1.5 lg:gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-9 lg:h-11 xl:w-auto"
+                  title={t(type === 'tag' ? 'tags' : type === 'table' ? 'data_table' : type === 'logic' ? 'logic_node' : 'link_classification')}
+                >
+                  <div className={`p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors flex-shrink-0`}>
                     {type === 'tag' && <TagIcon size={14} />}
                     {type === 'table' && <Database size={14} />}
                     {type === 'logic' && <FileText size={14} />}
                     {type === 'edge' && <Link2 size={14} />}
                   </div>
-                  <div className="flex flex-col items-start pr-1">
+                  <div className="flex flex-col items-start pr-1 hidden xl:flex">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
                       {t(type === 'tag' ? 'tags' : type === 'table' ? 'data_table' : type === 'logic' ? 'logic_node' : 'link_classification')}
                     </span>
                     <span className="text-xs font-bold text-slate-700">{getFilterDisplay(type)}</span>
                   </div>
-                  <ChevronDown size={14} className={`text-slate-400 transition-transform ${openMenuType === type ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === type ? 'rotate-180' : ''} hidden lg:block`} />
+                  <span className="text-[10px] font-bold bg-slate-900 text-white rounded px-1 lg:hidden">{getFilterDisplay(type)}</span>
                 </button>
                 {openMenuType === type && (
                   <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
@@ -697,18 +718,22 @@ function BlueprintStudio() {
           </div>
 
           {/* Right Controls (Settings & I/O Group) */}
-          <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap shrink-0">
             {/* Import/Export Dropdown */}
-            <div className="relative">
-              <button onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group">
-                <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+            <div className="relative flex-shrink-0">
+              <button 
+                onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} 
+                className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-9 lg:h-11 xl:w-auto"
+                title="Project Actions"
+              >
+                <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors flex-shrink-0">
                   <ArrowUpDown size={14} />
                 </div>
-                <div className="flex flex-col items-start pr-1">
+                <div className="flex flex-col items-start pr-1 hidden xl:flex">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Project</span>
                   <span className="text-xs font-bold text-slate-700">Import/Export</span>
                 </div>
-                <ChevronDown size={14} className={`text-slate-400 transition-transform ${openMenuType === 'io' ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === 'io' ? 'rotate-180' : ''} hidden lg:block`} />
               </button>
               {openMenuType === 'io' && (
                 <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
@@ -733,7 +758,7 @@ function BlueprintStudio() {
             {/* General Settings (Circular Gear) */}
             <button 
               onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
-              className="w-11 h-11 flex items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:border-slate-300 transition-all text-slate-600 hover:text-slate-900 group"
+              className="w-9 h-9 lg:w-11 lg:h-11 flex items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:border-slate-300 transition-all text-slate-600 hover:text-slate-900 group flex-shrink-0"
               title={t('general_settings')}
             >
               <Settings2 size={20} className="group-hover:rotate-45 transition-transform duration-500" />
