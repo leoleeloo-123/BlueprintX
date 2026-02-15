@@ -618,7 +618,7 @@ function BlueprintStudio() {
       <main className="w-full h-full relative">
         {/* Unified Responsive Top Toolbar */}
         <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
-          {/* Logo & Filter Group */}
+          {/* Action Group */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
             {/* Create Node */}
             <div className="relative flex-shrink-0">
@@ -645,6 +645,15 @@ function BlueprintStudio() {
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 lg:mx-1 flex-shrink-0" />
 
+            {/* General Settings (Black Branding/Setting Button) - Moved to left group as requested */}
+            <button 
+              onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
+              className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group flex-shrink-0 aspect-square border border-slate-700 ring-2 ring-transparent active:scale-95"
+              title={t('general_settings')}
+            >
+              <Settings2 size={22} className="group-hover:rotate-90 transition-transform duration-500" />
+            </button>
+
             {/* Reset Filters - Distinct Rose Color */}
             <button 
               onClick={handleResetFilters} 
@@ -660,7 +669,7 @@ function BlueprintStudio() {
               </div>
             </button>
 
-            {/* Filter Dropdowns - Strictly Responsive Circles on Mobile */}
+            {/* Filter Dropdowns */}
             {['tag', 'table', 'logic', 'edge'].map((type: any) => (
               <div className="relative flex-shrink-0" key={type}>
                 <button 
@@ -687,7 +696,6 @@ function BlueprintStudio() {
                   </div>
                   <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === type ? 'rotate-180' : ''} hidden xl:block`} />
                   
-                  {/* Fixed Numeric Badge for Mobile Viewport */}
                   {getFilterCount(type) > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white xl:hidden shadow-sm border border-white z-20 leading-none">
                       {getFilterCount(type)}
@@ -696,7 +704,6 @@ function BlueprintStudio() {
                 </button>
                 {openMenuType === type && (
                   <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                    {/* All Items Option */}
                     <button 
                       onClick={() => (type === 'tag' ? setActiveTagFilters([]) : type === 'table' ? setActiveTableFilters([]) : type === 'logic' ? setActiveLogicFilters([]) : setActiveEdgeFilters([]))} 
                       className="w-full flex items-start justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600 text-left"
@@ -707,7 +714,6 @@ function BlueprintStudio() {
                       </div>
                       {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).length === 0 && <Check size={14} className="mt-1 shrink-0 ml-2" />}
                     </button>
-                    {/* Hide All Option */}
                     <button 
                       onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} 
                       className="w-full flex items-start justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600 text-left"
@@ -738,9 +744,8 @@ function BlueprintStudio() {
             ))}
           </div>
 
-          {/* Right Controls (Settings & I/O Group) */}
+          {/* Right Controls */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap shrink-0">
-            {/* Import/Export Dropdown */}
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} 
@@ -775,15 +780,6 @@ function BlueprintStudio() {
                 </div>
               )}
             </div>
-
-            {/* General Settings (Circular Gear) */}
-            <button 
-              onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
-              className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:border-slate-300 transition-all text-slate-600 hover:text-slate-900 group flex-shrink-0 aspect-square"
-              title={t('general_settings')}
-            >
-              <Settings2 size={22} className="group-hover:rotate-45 transition-transform duration-500" />
-            </button>
           </div>
         </div>
 
@@ -801,6 +797,17 @@ function BlueprintStudio() {
             </div>
           </div>
         )}
+
+        {/* Watermark Logo Branding - Relocated to Bottom-Right, Gear Icon, Black Style */}
+        <div className="absolute bottom-6 right-6 z-40 flex items-center gap-3 bg-slate-900/5 backdrop-blur-[2px] px-4 py-2 rounded-2xl border border-slate-900/10 transition-all duration-500 hover:bg-slate-900/10 hover:backdrop-blur-md group/watermark opacity-40 hover:opacity-100 pointer-events-auto cursor-default select-none shadow-sm hover:shadow-xl">
+          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg relative overflow-hidden group-hover/watermark:rotate-45 transition-transform duration-700">
+            <Settings2 size={20} strokeWidth={2.5} className="relative z-10" />
+          </div>
+          <div className="flex flex-col items-start leading-none">
+            <h1 className="text-lg lg:text-xl font-black text-slate-900 tracking-tighter transition-colors">WhiteBox</h1>
+            <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-0.5">Documentation Studio</span>
+          </div>
+        </div>
 
         <ReactFlow
           nodes={nodesWithActions}
@@ -823,7 +830,7 @@ function BlueprintStudio() {
           }}
         >
           <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
-          <Controls position="bottom-right" />
+          <Controls position="bottom-right" style={{ marginBottom: '60px' }} />
         </ReactFlow>
         <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
       </main>
