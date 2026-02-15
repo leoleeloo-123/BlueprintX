@@ -81,7 +81,8 @@ export const translations = {
     pos_center: "Center",
     pos_source: "Source",
     pos_target: "Target",
-    label_max_width: "Label Max Width (px)"
+    label_max_width: "Label Max Width (px)",
+    workspace: "Workspace"
   },
   zh: {
     all: "显示全部",
@@ -164,6 +165,7 @@ export const translations = {
     pos_center: "居中",
     pos_source: "靠近来源",
     pos_target: "靠近目标",
-    label_max_width: "标签最大宽度 (px)"
+    label_max_width: "标签最大宽度 (px)",
+    workspace: "工作区"
   }
 };

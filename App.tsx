@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
@@ -195,14 +195,13 @@ const PROJECT_STORAGE_KEY = 'whitebox_project_v1';
 const APPEARANCE_STORAGE_KEY = 'whitebox_appearance_v1';
 const HIDE_ALL_VALUE = '__HIDE_ALL__';
 
-// Consistent padding for all fitView operations to account for top filters
 const CANVAS_PADDING = 0.35;
 
 function BlueprintStudio() {
   const { fitView } = useReactFlow();
   const hasPerformedInitialFit = useRef(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
-  const filterBarRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -256,7 +255,6 @@ function BlueprintStudio() {
     return DEFAULT_APPEARANCE;
   });
 
-  // Filter States - Now with localStorage initialization
   const [activeTableFilters, setActiveTableFilters] = useState<string[]>(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
     if (saved) {
@@ -294,17 +292,16 @@ function BlueprintStudio() {
     return [];
   });
   
-  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | 'add' | null>(null);
+  const [openMenuType, setOpenMenuType] = useState<'table' | 'logic' | 'edge' | 'tag' | 'add' | 'io' | null>(null);
 
-  // Click outside to close any open filter dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (filterBarRef.current && !filterBarRef.current.contains(event.target as Node)) {
-        setOpenFilterType(null);
+      if (toolbarRef.current && !toolbarRef.current.contains(event.target as Node)) {
+        setOpenMenuType(null);
       }
     }
 
-    if (openFilterType) {
+    if (openMenuType) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -313,7 +310,7 @@ function BlueprintStudio() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [openFilterType]);
+  }, [openMenuType]);
 
   useEffect(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -349,7 +346,7 @@ function BlueprintStudio() {
 
   const [editingNode, setEditingNode] = useState<string | null>(null);
   const [editingEdge, setEditingEdge] = useState<string | null>(null);
-  const [showStudioSettings, setShowStudioSettings] = useState<any>(null); // null or { initialTab: string }
+  const [showStudioSettings, setShowStudioSettings] = useState<any>(null);
 
   const t = (key: keyof typeof translations.en) => translations[appearance.language][key] || key;
 
@@ -407,6 +404,7 @@ function BlueprintStudio() {
       hasPerformedInitialFit.current = false;
       setIsDemoMode(false);
       localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify({ nodes: [], edges: [], settings }));
+      setOpenMenuType(null);
     }
   }, [t, settings]);
 
@@ -415,7 +413,7 @@ function BlueprintStudio() {
     setActiveLogicFilters([]);
     setActiveEdgeFilters([]);
     setActiveTagFilters([]);
-    setOpenFilterType(null);
+    setOpenMenuType(null);
   }, []);
 
   const addNode = (type: NodeCardType) => {
@@ -443,7 +441,7 @@ function BlueprintStudio() {
         tags: []
       },
     }));
-    setOpenFilterType(null);
+    setOpenMenuType(null);
     setIsDemoMode(false);
   };
 
@@ -467,7 +465,6 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tags || []), "Tags");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([appearance]), "Appearance");
     
-    // Save current active filter states
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{
       TableFilters: activeTableFilters.join('|'),
       LogicFilters: activeLogicFilters.join('|'),
@@ -484,6 +481,7 @@ function BlueprintStudio() {
     
     const filename = `WhiteBox_${org}_${user}_${dateStr}_${timeStr}.xlsx`;
     XLSX.writeFile(wb, filename);
+    setOpenMenuType(null);
   };
 
   const importFromExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -504,7 +502,6 @@ function BlueprintStudio() {
         setAppearance({ ...DEFAULT_APPEARANCE, ...appSettingsRaw });
       }
 
-      // Import Filters
       const filterSheet = workbook.Sheets["ActiveFilters"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ActiveFilters"])[0] as any : null;
       if (filterSheet) {
         setActiveTableFilters(filterSheet.TableFilters ? filterSheet.TableFilters.split('|').filter(Boolean) : []);
@@ -542,6 +539,7 @@ function BlueprintStudio() {
       setNodes(importedNodes);
       setEdges(importedEdges);
       setIsDemoMode(false);
+      setOpenMenuType(null);
       
       setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 400 }), 50);
     };
@@ -608,51 +606,141 @@ function BlueprintStudio() {
   };
 
   return (
-    <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50 relative" style={{ backgroundColor: appearance.canvasBgColor }}>
-      <aside className="w-72 h-full bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-        <div className="p-6 border-b border-slate-50 flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-200 relative overflow-hidden group flex-shrink-0">
-              <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <PackageOpen size={30} strokeWidth={2.2} className="relative z-10" />
+    <div className="w-full h-full bg-slate-50 relative overflow-hidden" style={{ backgroundColor: appearance.canvasBgColor }}>
+      <main className="w-full h-full relative">
+        {/* Unified Top Toolbar */}
+        <div className="absolute inset-x-0 top-0 p-6 flex items-center justify-between pointer-events-none z-30" ref={toolbarRef}>
+          {/* Logo & Filter Group */}
+          <div className="flex items-center gap-3 pointer-events-auto">
+            {/* Branding Logo */}
+            <div className="flex items-center gap-3 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-lg mr-3">
+              <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center">
+                <PackageOpen size={20} />
+              </div>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none">WhiteBox</h1>
             </div>
-            <div className="overflow-hidden">
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">WhiteBox</h1>
+
+            <div className="relative">
+              <button onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} className={`w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openMenuType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}>
+                <Plus size={24} />
+              </button>
+              {openMenuType === 'add' && (
+                <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                  <button onClick={() => addNode(NodeCardType.TABLE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                    <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Database size={16} /></div>
+                    {t('data_table')}
+                  </button>
+                  <button onClick={() => addNode(NodeCardType.LOGIC_NOTE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors">
+                    <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></div>
+                    {t('logic_node')}
+                  </button>
+                </div>
+              )}
             </div>
+
+            <div className="h-6 w-px bg-slate-200 mx-1" />
+
+            <button onClick={handleAutoAlign} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-blue-100">
+              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <Layers size={14} />
+              </div>
+              <div className="flex flex-col items-start pr-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('workspace')}</span>
+                <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{t('auto_align')}</span>
+              </div>
+            </button>
+
+            <button onClick={handleResetFilters} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100">
+              <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
+                <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+              </div>
+              <div className="flex flex-col items-start pr-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('filters_label')}</span>
+                <span className="text-xs font-bold text-slate-700 group-hover:text-red-600 transition-colors">{t('reset_filters')}</span>
+              </div>
+            </button>
+
+            {['tag', 'table', 'logic', 'edge'].map((type: any) => (
+              <div className="relative" key={type}>
+                <button onClick={() => setOpenMenuType(openMenuType === type ? null : type)} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group">
+                  <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                    {type === 'tag' && <TagIcon size={14} />}
+                    {type === 'table' && <Database size={14} />}
+                    {type === 'logic' && <FileText size={14} />}
+                    {type === 'edge' && <Link2 size={14} />}
+                  </div>
+                  <div className="flex flex-col items-start pr-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
+                      {t(type === 'tag' ? 'tags' : type === 'table' ? 'data_table' : type === 'logic' ? 'logic_node' : 'link_classification')}
+                    </span>
+                    <span className="text-xs font-bold text-slate-700">{getFilterDisplay(type)}</span>
+                  </div>
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform ${openMenuType === type ? 'rotate-180' : ''}`} />
+                </button>
+                {openMenuType === type && (
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                    <button onClick={() => (type === 'tag' ? setActiveTagFilters([]) : type === 'table' ? setActiveTableFilters([]) : type === 'logic' ? setActiveLogicFilters([]) : setActiveEdgeFilters([]))} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600">
+                      <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
+                      {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).length === 0 && <Check size={14} />}
+                    </button>
+                    <div className="h-px bg-slate-50 my-1 mx-4" />
+                    {(type === 'tag' ? settings.tags : type === 'table' ? settings.tableCategories : type === 'logic' ? settings.logicCategories : settings.connectionTypes).map((item: any) => (
+                      <button key={item.id} onClick={() => toggleMultiFilter(item.id, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600">
+                        <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />{item.name}</div>
+                        {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).includes(item.id) && <Check size={14} />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Right Controls (Settings & I/O Group) */}
+          <div className="flex items-center gap-3 pointer-events-auto">
+            {/* Import/Export Dropdown */}
+            <div className="relative">
+              <button onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group">
+                <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                  <ArrowUpDown size={14} />
+                </div>
+                <div className="flex flex-col items-start pr-1">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Project</span>
+                  <span className="text-xs font-bold text-slate-700">Import/Export</span>
+                </div>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform ${openMenuType === 'io' ? 'rotate-180' : ''}`} />
+              </button>
+              {openMenuType === 'io' && (
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                  <button onClick={exportToExcel} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                    <Download size={16} className="text-blue-600" />
+                    {t('export_project')}
+                  </button>
+                  <label className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                    <Upload size={16} className="text-emerald-600" />
+                    {t('import_xlsx')}
+                    <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
+                  </label>
+                  <div className="h-px bg-slate-50 my-1 mx-4" />
+                  <button onClick={handleResetCanvas} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors">
+                    <Trash2 size={16} />
+                    {t('reset_canvas')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* General Settings (Circular Gear) */}
+            <button 
+              onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
+              className="w-11 h-11 flex items-center justify-center bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl hover:border-slate-300 transition-all text-slate-600 hover:text-slate-900 group"
+              title={t('general_settings')}
+            >
+              <Settings2 size={20} className="group-hover:rotate-45 transition-transform duration-500" />
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-8">
-          <section className="flex flex-col gap-4">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">{t('configuration')}</h2>
-            <div className="flex flex-col gap-1">
-              <button onClick={() => setShowStudioSettings({ initialTab: 'general' })} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
-                <Settings2 size={18} />
-                <span>{t('general_settings')}</span>
-              </button>
-              <button onClick={handleAutoAlign} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50 w-full text-left">
-                <Layers size={18} />
-                <span>{t('auto_align')}</span>
-              </button>
-            </div>
-          </section>
-        </div>
-
-        <div className="p-6 border-t border-slate-50 flex flex-col gap-3">
-          <button onClick={exportToExcel} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-semibold text-xs shadow-md shadow-slate-100">
-            <Download size={14} /> {t('export_project')}
-          </button>
-          <label className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-all font-semibold text-xs cursor-pointer">
-            <Upload size={14} /> {t('import_xlsx')}
-            <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
-          </label>
-          <button onClick={handleResetCanvas} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-red-50 border border-red-100 text-red-600 rounded-xl hover:bg-red-100 hover:border-red-200 transition-all font-semibold text-xs">
-            <Trash2 size={14} /> {t('reset_canvas')}
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 min-h-0 relative">
         {isDemoMode && (
           <div className="absolute top-24 left-6 z-40 animate-in fade-in slide-in-from-left-4 duration-500">
             <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-xl shadow-amber-200/20">
@@ -668,174 +756,6 @@ function BlueprintStudio() {
           </div>
         )}
 
-        <div className="absolute top-6 left-6 z-30 flex items-center gap-3" ref={filterBarRef}>
-          <div className="relative">
-            <button onClick={() => setOpenFilterType(openFilterType === 'add' ? null : 'add')} className={`w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openFilterType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}>
-              <Plus size={24} />
-            </button>
-            {openFilterType === 'add' && (
-              <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => addNode(NodeCardType.TABLE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                  <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Database size={16} /></div>
-                  {t('data_table')}
-                </button>
-                <button onClick={() => addNode(NodeCardType.LOGIC_NOTE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors">
-                  <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></div>
-                  {t('logic_node')}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="h-6 w-px bg-slate-200 mx-1" />
-
-          <button onClick={handleResetFilters} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100">
-            <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
-              <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
-            </div>
-            <div className="flex flex-col items-start pr-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('filters_label')}</span>
-              <span className="text-xs font-bold text-slate-700 group-hover:text-red-600 transition-colors">{t('reset_filters')}</span>
-            </div>
-          </button>
-
-          {/* Tag Filter */}
-          <div className="relative">
-            <button onClick={() => setOpenFilterType(openFilterType === 'tag' ? null : 'tag')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTagFilters.length > 0 ? 'ring-2 ring-emerald-400 border-transparent' : ''}`}>
-              <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                <TagIcon size={14} />
-              </div>
-              <div className="flex flex-col items-start pr-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('tags')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('tag')}</span>
-              </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'tag' ? 'rotate-180' : ''}`} />
-            </button>
-            {openFilterType === 'tag' && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => setActiveTagFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTagFilters.length === 0 ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
-                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
-                  {activeTagFilters.length === 0 && <Check size={14} />}
-                </button>
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                {settings.tags.map(tag => (
-                  <button key={tag.id} onClick={() => toggleMultiFilter(tag.id, activeTagFilters, setActiveTagFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTagFilters.includes(tag.id) ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
-                    <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />{tag.name}</div>
-                    {activeTagFilters.includes(tag.id) && <Check size={14} />}
-                  </button>
-                ))}
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeTagFilters, setActiveTagFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTagFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
-                  {activeTagFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Table Filter */}
-          <div className="relative">
-            <button onClick={() => setOpenFilterType(openFilterType === 'table' ? null : 'table')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTableFilters.length > 0 ? 'ring-2 ring-blue-400 border-transparent' : ''}`}>
-              <div className="p-1 bg-blue-100 rounded-full text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <Database size={14} />
-              </div>
-              <div className="flex flex-col items-start pr-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('data_table')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('table')}</span>
-              </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'table' ? 'rotate-180' : ''}`} />
-            </button>
-            {openFilterType === 'table' && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => setActiveTableFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTableFilters.length === 0 ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
-                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
-                  {activeTableFilters.length === 0 && <Check size={14} />}
-                </button>
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                {settings.tableCategories.map(cat => (
-                  <button key={cat.id} onClick={() => toggleMultiFilter(cat.id, activeTableFilters, setActiveTableFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTableFilters.includes(cat.id) ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
-                    <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}</div>
-                    {activeTableFilters.includes(cat.id) && <Check size={14} />}
-                  </button>
-                ))}
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeTableFilters, setActiveTableFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTableFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
-                  {activeTableFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Logic Filter */}
-          <div className="relative">
-            <button onClick={() => setOpenFilterType(openFilterType === 'logic' ? null : 'logic')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeLogicFilters.length > 0 ? 'ring-2 ring-purple-400 border-transparent' : ''}`}>
-              <div className="p-1 bg-purple-100 rounded-full text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                <FileText size={14} />
-              </div>
-              <div className="flex flex-col items-start pr-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('logic_node')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('logic')}</span>
-              </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'logic' ? 'rotate-180' : ''}`} />
-            </button>
-            {openFilterType === 'logic' && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => setActiveLogicFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeLogicFilters.length === 0 ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
-                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
-                  {activeLogicFilters.length === 0 && <Check size={14} />}
-                </button>
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                {settings.logicCategories.map(cat => (
-                  <button key={cat.id} onClick={() => toggleMultiFilter(cat.id, activeLogicFilters, setActiveLogicFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeLogicFilters.includes(cat.id) ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
-                    <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}</div>
-                    {activeLogicFilters.includes(cat.id) && <Check size={14} />}
-                  </button>
-                ))}
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeLogicFilters, setActiveLogicFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeLogicFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
-                  {activeLogicFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Edge Filter */}
-          <div className="relative">
-            <button onClick={() => setOpenFilterType(openFilterType === 'edge' ? null : 'edge')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeEdgeFilters.length > 0 ? 'ring-2 ring-slate-400 border-transparent' : ''}`}>
-              <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-600 group-hover:text-white transition-colors">
-                <Link2 size={14} />
-              </div>
-              <div className="flex flex-col items-start pr-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('link_classification')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('edge')}</span>
-              </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'edge' ? 'rotate-180' : ''}`} />
-            </button>
-            {openFilterType === 'edge' && (
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => setActiveEdgeFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeEdgeFilters.length === 0 ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
-                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
-                  {activeEdgeFilters.length === 0 && <Check size={14} />}
-                </button>
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                {settings.connectionTypes.map(conn => (
-                  <button key={conn.id} onClick={() => toggleMultiFilter(conn.id, activeEdgeFilters, setActiveEdgeFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeEdgeFilters.includes(conn.id) ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
-                    <div className="flex items-center gap-3"><div className="w-3 h-px border-t border-slate-400" style={{ borderColor: conn.color, borderWidth: 2 }} />{conn.name}</div>
-                    {activeEdgeFilters.includes(conn.id) && <Check size={14} />}
-                  </button>
-                ))}
-                <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeEdgeFilters, setActiveEdgeFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeEdgeFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
-                  {activeEdgeFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
         <ReactFlow
           nodes={nodesWithActions}
           edges={edgesWithActions}
@@ -848,8 +768,8 @@ function BlueprintStudio() {
           fitViewOptions={{ padding: CANVAS_PADDING }}
           minZoom={0.05}
           maxZoom={4}
-          onPaneClick={() => setOpenFilterType(null)}
-          onMoveStart={() => setOpenFilterType(null)}
+          onPaneClick={() => setOpenMenuType(null)}
+          onMoveStart={() => setOpenMenuType(null)}
           className="bg-transparent"
           defaultEdgeOptions={{ 
             type: 'blueprintEdge',
