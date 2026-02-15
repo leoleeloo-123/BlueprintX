@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
@@ -49,9 +49,9 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     { id: 'conn-ref', name: 'Reference Only', color: '#64748b', width: 1, dashStyle: 'dashed' }
   ],
   dataSources: [
-    { id: 'src-erp', name: 'ERP Data' },
-    { id: 'src-xls', name: 'Excel Data' },
-    { id: 'src-sql', name: 'Database' }
+    { id: 'src-erp', name: 'ERP System' },
+    { id: 'src-crm', name: 'CRM Database' },
+    { id: 'src-sql', name: 'Azure SQL' }
   ],
   fieldTypes: [
     { id: 'ft-text', name: 'Text' },
@@ -59,17 +59,137 @@ const DEFAULT_SETTINGS: GlobalSettings = {
     { id: 'ft-date', name: 'Date' },
     { id: 'ft-bool', name: 'Boolean' }
   ],
-  tags: []
+  tags: [
+    { id: 'tag-prod', name: 'Production', color: '#ef4444' },
+    { id: 'tag-ext', name: 'External', color: '#f59e0b' },
+    { id: 'tag-crit', name: 'Critical', color: '#7c3aed' }
+  ]
 };
+
+// --- Demo Data Definitions ---
+const DEMO_NODES: Node<NodeData>[] = [
+  {
+    id: 'demo-1',
+    type: 'blueprintNode',
+    position: { x: -300, y: 50 },
+    data: { 
+      label: 'ERP Invoices', 
+      cardType: NodeCardType.TABLE, 
+      categoryId: 'cat-src',
+      dataSourceId: 'src-erp',
+      tags: ['tag-prod', 'tag-ext'],
+      columns: [
+        { id: 'c1', name: 'Invoice_ID', typeId: 'ft-text', isKey: true },
+        { id: 'c2', name: 'Posted_Date', typeId: 'ft-date' },
+        { id: 'c3', name: 'Total_Amount', typeId: 'ft-number' },
+        { id: 'c4', name: 'Vendor_ID', typeId: 'ft-text' }
+      ],
+      comment: 'Direct feed from SAP production instance.'
+    }
+  },
+  {
+    id: 'demo-2',
+    type: 'blueprintNode',
+    position: { x: -300, y: 450 },
+    data: { 
+      label: 'Customer Master', 
+      cardType: NodeCardType.TABLE, 
+      categoryId: 'cat-src',
+      dataSourceId: 'src-crm',
+      tags: ['tag-prod'],
+      columns: [
+        { id: 'c5', name: 'Cust_ID', typeId: 'ft-text', isKey: true },
+        { id: 'c6', name: 'Tax_ID', typeId: 'ft-text' },
+        { id: 'c7', name: 'Region', typeId: 'ft-text' }
+      ]
+    }
+  },
+  {
+    id: 'demo-3',
+    type: 'blueprintNode',
+    position: { x: 100, y: 250 },
+    data: { 
+      label: 'Data Integrity Shield', 
+      cardType: NodeCardType.LOGIC_NOTE, 
+      categoryId: 'log-rule',
+      tags: ['tag-crit'],
+      description: 'Central validation gate for all incoming financial streams.',
+      bulletPoints: [
+        'Validate VAT ID against VIES registry',
+        'Check for duplicate Invoice_IDs in 24h window',
+        'Reject records with null Total_Amount'
+      ]
+    }
+  },
+  {
+    id: 'demo-4',
+    type: 'blueprintNode',
+    position: { x: 500, y: 250 },
+    data: { 
+      label: 'EU Tax Engine', 
+      cardType: NodeCardType.LOGIC_NOTE, 
+      categoryId: 'log-calc',
+      tags: ['tag-prod', 'tag-crit'],
+      description: 'Calculates regional VAT and cross-border duties.',
+      bulletPoints: [
+        'Apply 21% standard rate for local sales',
+        'Apply reverse charge logic for B2B cross-border',
+        'Round to 2 decimal places'
+      ]
+    }
+  },
+  {
+    id: 'demo-5',
+    type: 'blueprintNode',
+    position: { x: 900, y: 50 },
+    data: { 
+      label: 'Final Tax Ledger', 
+      cardType: NodeCardType.TABLE, 
+      categoryId: 'cat-std',
+      tags: ['tag-prod'],
+      columns: [
+        { id: 'c8', name: 'Entry_ID', typeId: 'ft-text', isKey: true },
+        { id: 'c9', name: 'Net_Amount', typeId: 'ft-number' },
+        { id: 'c10', name: 'VAT_Amount', typeId: 'ft-number' },
+        { id: 'c11', name: 'Status', typeId: 'ft-text' }
+      ]
+    }
+  },
+  {
+    id: 'demo-6',
+    type: 'blueprintNode',
+    position: { x: 900, y: 450 },
+    data: { 
+      label: 'VAT Compliance Report', 
+      cardType: NodeCardType.TABLE, 
+      categoryId: 'cat-std',
+      tags: ['tag-ext'],
+      columns: [
+        { id: 'c12', name: 'Report_ID', typeId: 'ft-text', isKey: true },
+        { id: 'c13', name: 'Period', typeId: 'ft-text' },
+        { id: 'c14', name: 'Total_VAT_Collected', typeId: 'ft-number' }
+      ]
+    }
+  }
+];
+
+const DEMO_EDGES: Edge[] = [
+  { id: 'e1', source: 'demo-1', target: 'demo-3', sourceHandle: 'r-s', targetHandle: 'l-t', type: 'blueprintEdge', data: { typeId: 'conn-std' }, markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } },
+  { id: 'e2', source: 'demo-2', target: 'demo-3', sourceHandle: 'r-s', targetHandle: 'l-t', type: 'blueprintEdge', data: { typeId: 'conn-std' }, markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } },
+  { id: 'e3', source: 'demo-3', target: 'demo-4', sourceHandle: 'r-s', targetHandle: 'l-t', type: 'blueprintEdge', label: 'Validated Flow', data: { typeId: 'conn-crit' }, markerEnd: { type: MarkerType.ArrowClosed, color: '#dc2626' } },
+  { id: 'e4', source: 'demo-4', target: 'demo-5', sourceHandle: 'r-s', targetHandle: 'l-t', type: 'blueprintEdge', data: { typeId: 'conn-std' }, markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } },
+  { id: 'e5', source: 'demo-4', target: 'demo-6', sourceHandle: 'r-s', targetHandle: 'l-t', type: 'blueprintEdge', data: { typeId: 'conn-std' }, markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' } }
+];
 
 const DEFAULT_APPEARANCE: AppearanceSettings = {
   language: 'en',
   canvasBgColor: '#f8fafc',
   headerFontSize: 'sm',
   contentFontSize: 'sm',
-  userName: 'User',
-  organizationName: 'Org',
-  isLegendExpanded: true
+  userName: 'Blueprinter',
+  organizationName: 'Data Blueprint Corp',
+  isLegendExpanded: true,
+  maxFieldsToShow: 6
 };
 
 const PROJECT_STORAGE_KEY = 'whitebox_project_v1';
@@ -82,6 +202,7 @@ const CANVAS_PADDING = 0.35;
 function BlueprintStudio() {
   const { fitView } = useReactFlow();
   const hasPerformedInitialFit = useRef(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -93,7 +214,8 @@ function BlueprintStudio() {
         console.error("Failed to parse saved nodes", e);
       }
     }
-    return [];
+    // No saved project: Start Demo Mode
+    return DEMO_NODES;
   });
 
   const [edges, setEdges] = useState<Edge[]>(() => {
@@ -106,7 +228,8 @@ function BlueprintStudio() {
         console.error("Failed to parse saved edges", e);
       }
     }
-    return [];
+    // No saved project: Load Demo Edges
+    return DEMO_EDGES;
   });
 
   const [settings, setSettings] = useState<GlobalSettings>(() => {
@@ -119,6 +242,7 @@ function BlueprintStudio() {
         console.error("Failed to parse saved settings", e);
       }
     }
+    // No saved project: Use default settings
     return DEFAULT_SETTINGS;
   });
 
@@ -134,6 +258,12 @@ function BlueprintStudio() {
     }
     return DEFAULT_APPEARANCE;
   });
+
+  // Determine if we are in Demo Mode based on localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    setIsDemoMode(!saved);
+  }, []);
 
   // Filter States
   const [activeTableFilter, setActiveTableFilter] = useState<string | null>(null);
@@ -154,6 +284,8 @@ function BlueprintStudio() {
   }, [nodes.length, fitView]);
 
   useEffect(() => {
+    // We only persist if we're not in demo mode or once the user makes changes
+    // But for simplicity, we persist everything, and demo mode flag is just the initial absence of data.
     const projectData = { nodes, edges, settings };
     localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(projectData));
   }, [nodes, edges, settings]);
@@ -171,10 +303,12 @@ function BlueprintStudio() {
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
+    setIsDemoMode(false); // Any change breaks demo mode
   }, []);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
     setEdges((eds) => applyEdgeChanges(changes, eds));
+    setIsDemoMode(false);
   }, []);
   
   const onConnect = useCallback((params: Connection) => {
@@ -185,11 +319,13 @@ function BlueprintStudio() {
       data: { typeId: defaultType.id },
       markerEnd: { type: MarkerType.ArrowClosed, color: defaultType.color }
     }, eds));
+    setIsDemoMode(false);
   }, [settings]);
 
   const handleSaveNode = (id: string, updatedData: Partial<NodeData>) => {
     setNodes((nds) => nds.map((node) => node.id === id ? { ...node, data: { ...node.data, ...updatedData } } : node));
     setEditingNode(null);
+    setIsDemoMode(false);
   };
 
   const handleSaveEdge = (id: string, data: { typeId: string; label: string; hasArrow: boolean }) => {
@@ -201,6 +337,7 @@ function BlueprintStudio() {
       markerEnd: data.hasArrow ? { type: MarkerType.ArrowClosed, color: connType?.color || '#94a3b8' } : undefined
     } : edge));
     setEditingEdge(null);
+    setIsDemoMode(false);
   };
 
   const handleAutoAlign = useCallback(() => {
@@ -216,8 +353,11 @@ function BlueprintStudio() {
       setActiveEdgeFilter(null);
       setActiveTagFilter(null);
       hasPerformedInitialFit.current = false;
+      setIsDemoMode(false);
+      // Force persistence to clear demo state permanently
+      localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify({ nodes: [], edges: [], settings }));
     }
-  }, [t]);
+  }, [t, settings]);
 
   const handleResetFilters = useCallback(() => {
     setActiveTableFilter(null);
@@ -253,6 +393,7 @@ function BlueprintStudio() {
       },
     }));
     setOpenFilterType(null);
+    setIsDemoMode(false);
   };
 
   const exportToExcel = () => {
@@ -273,6 +414,8 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tags || []), "Tags");
+    // Also export Appearance settings to ensure parameters like maxFieldsToShow are persisted
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([appearance]), "Appearance");
 
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -298,6 +441,12 @@ function BlueprintStudio() {
       const fTypes = workbook.Sheets["FieldTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["FieldTypes"]) as FieldType[] : settings.fieldTypes;
       const importedTags = workbook.Sheets["Tags"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Tags"]) as Tag[] : [];
       
+      // Import Appearance Settings
+      const appSettingsRaw = workbook.Sheets["Appearance"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Appearance"])[0] : null;
+      if (appSettingsRaw) {
+        setAppearance({ ...DEFAULT_APPEARANCE, ...appSettingsRaw });
+      }
+
       const importedNodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
       const importedNodes = importedNodesRaw.map(n => ({
         id: String(n.ID), type: 'blueprintNode', position: { x: Number(n.X), y: Number(n.Y) },
@@ -330,6 +479,7 @@ function BlueprintStudio() {
       setActiveLogicFilter(null);
       setActiveEdgeFilter(null);
       setActiveTagFilter(null);
+      setIsDemoMode(false);
       
       setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 400 }), 50);
     };
@@ -430,6 +580,25 @@ function BlueprintStudio() {
       </aside>
 
       <main className="flex-1 min-h-0 relative">
+        {/* Demo Mode Indicator */}
+        {isDemoMode && (
+          <div className="absolute top-24 left-6 z-40 animate-in fade-in slide-in-from-left-4 duration-500">
+            <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-xl shadow-amber-200/20">
+              <div className="p-2 bg-amber-400 text-white rounded-xl shadow-inner"><Info size={20} /></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-black text-amber-800 uppercase tracking-widest leading-none mb-1">{t('demo_mode')}</span>
+                <span className="text-[11px] font-bold text-amber-600/80">{t('demo_reset_hint')}</span>
+              </div>
+              <button 
+                onClick={() => setIsDemoMode(false)}
+                className="ml-4 p-1.5 hover:bg-amber-100 rounded-full text-amber-400 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Canvas View Tools & Filters */}
         <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
           {/* Add Node Dropdown */}
@@ -462,7 +631,7 @@ function BlueprintStudio() {
 
           <div className="h-6 w-px bg-slate-200 mx-1" />
 
-          {/* Reset Filters Button - Adjusted to match filter styles for consistent alignment */}
+          {/* Reset Filters Button */}
           <button 
             onClick={handleResetFilters}
             className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100"

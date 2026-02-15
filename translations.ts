@@ -72,7 +72,11 @@ export const translations = {
     assign_tags: "Assign Tags",
     filter_tags: "Filter by Tag",
     reset_filters: "Reset",
-    filters_label: "Filters"
+    filters_label: "Filters",
+    demo_mode: "Demo Mode",
+    demo_reset_hint: "Clear canvas to start a new project.",
+    max_fields_label: "Max Fields to Show",
+    total_fields: "Total {count} Fields"
   },
   zh: {
     all: "显示全部",
@@ -146,6 +150,10 @@ export const translations = {
     assign_tags: "分配标签",
     filter_tags: "按标签筛选",
     reset_filters: "重置",
-    filters_label: "筛选"
+    filters_label: "筛选",
+    demo_mode: "演示模式",
+    demo_reset_hint: "清空画布以开始新项目。",
+    max_fields_label: "最大显示字段数",
+    total_fields: "等 {count} 个字段"
   }
 };

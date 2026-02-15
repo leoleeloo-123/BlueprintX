@@ -15,6 +15,7 @@ export interface AppearanceSettings {
   userName: string;
   organizationName: string;
   isLegendExpanded: boolean;
+  maxFieldsToShow: number; // Maximum number of fields to display before truncating
 }
 
 export interface FieldType {

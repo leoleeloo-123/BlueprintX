@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Sliders, Globe, Palette, Type, User, Building2 } from 'lucide-react';
+import { X, Sliders, Globe, Palette, Type, User, Building2, ListOrdered } from 'lucide-react';
 import { AppearanceSettings, FontSizeScale } from '../types.ts';
 import { translations } from '../translations.ts';
 
@@ -100,6 +100,25 @@ export const GeneralSettingsModal: React.FC<GeneralSettingsModalProps> = ({ appe
                 value={local.canvasBgColor} 
                 onChange={e => setLocal({...local, canvasBgColor: e.target.value})}
                 className="flex-1 bg-transparent text-sm font-mono text-slate-600 focus:ring-0 border-0 p-0"
+              />
+            </div>
+          </section>
+
+          {/* Display Preferences */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <ListOrdered size={16} className="text-slate-400" />
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Display Preferences</h3>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-slate-500 mb-1.5 block uppercase tracking-tight">{t('max_fields_label')}</label>
+              <input 
+                type="number" 
+                min="1"
+                max="50"
+                value={local.maxFieldsToShow} 
+                onChange={e => setLocal({...local, maxFieldsToShow: parseInt(e.target.value) || 6})}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
           </section>

@@ -3,6 +3,7 @@ import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Trash2, Edit3, Database, FileText, BarChart2, MessageCircle, Key } from 'lucide-react';
 import { NodeData, NodeCardType, GlobalSettings } from '../types.ts';
+import { translations } from '../translations.ts';
 
 const HEADER_SIZES = { sm: 'text-[10px]', md: 'text-[12px]', lg: 'text-[14px]' };
 const CONTENT_SIZES = { sm: 'text-[10px]', md: 'text-[11px]', lg: 'text-[13px]' };
@@ -25,6 +26,17 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   const appearance = data.appearance;
   const headerFontSizeClass = HEADER_SIZES[appearance?.headerFontSize || 'sm'];
   const contentFontSizeClass = CONTENT_SIZES[appearance?.contentFontSize || 'sm'];
+
+  const t = (key: keyof typeof translations.en, params?: { count: number }) => {
+    const lang = appearance?.language || 'en';
+    let text = translations[lang][key] || key;
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        text = text.replace(`{${k}}`, String(v));
+      });
+    }
+    return text;
+  };
 
   // Filtering Logic
   let isFilteredOut = false;
@@ -91,10 +103,17 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
     );
   });
 
+  // Handle truncation for tables
+  const maxFields = appearance?.maxFieldsToShow ?? 6;
+  const totalColumns = data.columns?.length || 0;
+  const columnsToDisplay = isTable && totalColumns > maxFields 
+    ? data.columns?.slice(0, maxFields) 
+    : data.columns;
+  const hasTruncatedFields = isTable && totalColumns > maxFields;
+
   return (
     <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
-      {/* Visual Tag Tabs - Protruding from the left and expanding on group hover.
-          Positioned lower (top-16) to align with white content area and avoid header overlap. */}
+      {/* Visual Tag Tabs */}
       <div className="absolute top-16 right-full flex flex-col items-end gap-1.5 pointer-events-none z-10">
         {tagIndicators}
       </div>
@@ -142,7 +161,7 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
               </div>
             )}
             <div className="flex flex-col gap-1.5">
-              {data.columns?.map(col => {
+              {columnsToDisplay?.map(col => {
                 const fType = data.settings?.fieldTypes.find(ft => ft.id === col.typeId);
                 return (
                   <div key={col.id} className="flex items-center gap-2 py-1.5 px-2 hover:bg-slate-50 rounded-md transition-colors group/row">
@@ -164,19 +183,37 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
                   </div>
                 );
               })}
+              {hasTruncatedFields && (
+                <div className="mt-2 pt-2 border-t border-slate-50 flex justify-center">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest animate-pulse">
+                    {t('total_fields', { count: totalColumns })}
+                  </span>
+                </div>
+              )}
             </div>
           </>
         )}
         
         {isLogic && (
-          <div className="space-y-3">
-            <p className={`text-slate-500 leading-relaxed font-medium ${contentFontSizeClass}`}>{data.description}</p>
-            {data.bulletPoints?.map((p, idx) => (
-              <div key={idx} className="flex gap-2 text-slate-600">
-                <span style={{ color: headerColor }}>•</span>
-                <span className={contentFontSizeClass}>{p}</span>
-              </div>
-            ))}
+          <div className="space-y-4">
+            {data.description && (
+              <p className={`text-slate-500 leading-relaxed font-medium ${contentFontSizeClass} border-b border-slate-50 pb-2`}>
+                {data.description}
+              </p>
+            )}
+            <div className="space-y-2.5">
+              {data.bulletPoints?.map((p, idx) => (
+                <div key={idx} className="flex items-start gap-3 group/bullet">
+                  <div 
+                    className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 transition-transform duration-200 group-hover/bullet:scale-125" 
+                    style={{ backgroundColor: headerColor }} 
+                  />
+                  <span className={`${contentFontSizeClass} text-slate-600 leading-normal font-medium flex-1`}>
+                    {p}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
