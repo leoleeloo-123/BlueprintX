@@ -256,18 +256,50 @@ function BlueprintStudio() {
     return DEFAULT_APPEARANCE;
   });
 
+  // Filter States - Now with localStorage initialization
+  const [activeTableFilters, setActiveTableFilters] = useState<string[]>(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved).activeTableFilters || [];
+      } catch (e) { return []; }
+    }
+    return [];
+  });
+  const [activeLogicFilters, setActiveLogicFilters] = useState<string[]>(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved).activeLogicFilters || [];
+      } catch (e) { return []; }
+    }
+    return [];
+  });
+  const [activeEdgeFilters, setActiveEdgeFilters] = useState<string[]>(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved).activeEdgeFilters || [];
+      } catch (e) { return []; }
+    }
+    return [];
+  });
+  const [activeTagFilters, setActiveTagFilters] = useState<string[]>(() => {
+    const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved).activeTagFilters || [];
+      } catch (e) { return []; }
+    }
+    return [];
+  });
+  
+  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | 'add' | null>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
     setIsDemoMode(!saved);
   }, []);
-
-  // Filter States - Now using arrays for multi-selection
-  const [activeTableFilters, setActiveTableFilters] = useState<string[]>([]);
-  const [activeLogicFilters, setActiveLogicFilters] = useState<string[]>([]);
-  const [activeEdgeFilters, setActiveEdgeFilters] = useState<string[]>([]);
-  const [activeTagFilters, setActiveTagFilters] = useState<string[]>([]);
-  
-  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | 'add' | null>(null);
 
   useEffect(() => {
     if (!hasPerformedInitialFit.current && nodes.length > 0) {
@@ -280,9 +312,17 @@ function BlueprintStudio() {
   }, [nodes.length, fitView]);
 
   useEffect(() => {
-    const projectData = { nodes, edges, settings };
+    const projectData = { 
+      nodes, 
+      edges, 
+      settings,
+      activeTableFilters,
+      activeLogicFilters,
+      activeEdgeFilters,
+      activeTagFilters
+    };
     localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(projectData));
-  }, [nodes, edges, settings]);
+  }, [nodes, edges, settings, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters]);
 
   useEffect(() => {
     localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(appearance));
@@ -408,6 +448,14 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tags || []), "Tags");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([appearance]), "Appearance");
+    
+    // Save current active filter states
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{
+      TableFilters: activeTableFilters.join('|'),
+      LogicFilters: activeLogicFilters.join('|'),
+      EdgeFilters: activeEdgeFilters.join('|'),
+      TagFilters: activeTagFilters.join('|')
+    }]), "ActiveFilters");
 
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -438,6 +486,15 @@ function BlueprintStudio() {
         setAppearance({ ...DEFAULT_APPEARANCE, ...appSettingsRaw });
       }
 
+      // Import Filters
+      const filterSheet = workbook.Sheets["ActiveFilters"] ? XLSX.utils.sheet_to_json(workbook.Sheets["ActiveFilters"])[0] as any : null;
+      if (filterSheet) {
+        setActiveTableFilters(filterSheet.TableFilters ? filterSheet.TableFilters.split('|').filter(Boolean) : []);
+        setActiveLogicFilters(filterSheet.LogicFilters ? filterSheet.LogicFilters.split('|').filter(Boolean) : []);
+        setActiveEdgeFilters(filterSheet.EdgeFilters ? filterSheet.EdgeFilters.split('|').filter(Boolean) : []);
+        setActiveTagFilters(filterSheet.TagFilters ? filterSheet.TagFilters.split('|').filter(Boolean) : []);
+      }
+
       const importedNodesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Nodes"]) as any[];
       const importedNodes = importedNodesRaw.map(n => ({
         id: String(n.ID), type: 'blueprintNode', position: { x: Number(n.X), y: Number(n.Y) },
@@ -466,10 +523,6 @@ function BlueprintStudio() {
       setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes, dataSources, fieldTypes: fTypes, tags: importedTags });
       setNodes(importedNodes);
       setEdges(importedEdges);
-      setActiveTableFilters([]);
-      setActiveLogicFilters([]);
-      setActiveEdgeFilters([]);
-      setActiveTagFilters([]);
       setIsDemoMode(false);
       
       setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 400 }), 50);
