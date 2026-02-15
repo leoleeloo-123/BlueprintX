@@ -695,7 +695,7 @@ function BlueprintStudio() {
 
           return (
             <section key={cat.id} className="max-w-7xl mx-auto mb-16 animate-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center gap-4 mb-6 sticky top-0 py-4 bg-inherit z-20">
+              <div className="flex items-center gap-4 mb-6 py-4">
                 <div className="w-4 h-4 rounded-sm shadow-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
                 <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex-1">{cat.name}</h2>
                 <div className="px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-sm">
