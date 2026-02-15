@@ -5,6 +5,8 @@ export enum NodeCardType {
   REPORT = 'REPORT'
 }
 
+export type ViewType = 'canvas' | 'catalog';
+
 export type TagPosition = 'left' | 'right' | 'top' | 'bottom';
 
 export type FontSizeScale = 'sm' | 'md' | 'lg';
@@ -17,7 +19,7 @@ export interface AppearanceSettings {
   userName: string;
   organizationName: string;
   isLegendExpanded: boolean;
-  maxFieldsToShow: number; // Maximum number of fields to display before truncating
+  maxFieldsToShow: number; 
 }
 
 export interface FieldType {
@@ -79,12 +81,11 @@ export interface NodeData {
   bulletPoints?: string[];
   comment?: string; 
   dataSourceId?: string; 
-  tags?: string[]; // Array of Tag IDs
+  tags?: string[]; 
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
   appearance?: AppearanceSettings;
-  // Multi-filter states - now arrays for multiple selection
   activeTableFilters?: string[];
   activeLogicFilters?: string[];
   activeEdgeFilters?: string[];
@@ -98,7 +99,6 @@ export interface EdgeData {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
-  // Multi-filter states - now arrays for multiple selection
   activeTableFilters?: string[];
   activeLogicFilters?: string[];
   activeEdgeFilters?: string[];
@@ -115,7 +115,7 @@ export interface GlobalSettings {
   connectionTypes: ConnectionType[];
   dataSources: DataSource[]; 
   fieldTypes: FieldType[]; 
-  tags: Tag[]; // New global tags list
+  tags: Tag[]; 
 }
 
 export interface BlueprintProject {

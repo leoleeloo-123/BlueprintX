@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, { 
   Background, 
@@ -15,10 +16,10 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown, Maximize } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown, Maximize, Search, LayoutList, Map as MapIcon, Crosshair } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
+import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag, ViewType } from './types.ts';
 import { translations } from './translations.ts';
 import { BlueprintCard } from './components/BlueprintCard.tsx';
 import { BlueprintEdge } from './components/BlueprintEdge.tsx';
@@ -200,6 +201,8 @@ function BlueprintStudio() {
   const { fitView } = useReactFlow();
   const hasPerformedInitialFit = useRef(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [viewType, setViewType] = useState<ViewType>('canvas');
+  const [searchQuery, setSearchQuery] = useState('');
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
@@ -317,14 +320,14 @@ function BlueprintStudio() {
   }, []);
 
   useEffect(() => {
-    if (!hasPerformedInitialFit.current && nodes.length > 0) {
+    if (!hasPerformedInitialFit.current && nodes.length > 0 && viewType === 'canvas') {
       const timer = setTimeout(() => {
         fitView({ padding: CANVAS_PADDING });
         hasPerformedInitialFit.current = true;
       }, 200);
       return () => clearTimeout(timer);
     }
-  }, [nodes.length, fitView]);
+  }, [nodes.length, fitView, viewType]);
 
   useEffect(() => {
     const projectData = { 
@@ -392,6 +395,13 @@ function BlueprintStudio() {
     fitView({ padding: CANVAS_PADDING, duration: 800 });
   }, [fitView]);
 
+  const handleLocateOnCanvas = useCallback((nodeId: string) => {
+    setViewType('canvas');
+    setTimeout(() => {
+      fitView({ nodes: [{ id: nodeId }], duration: 1000, padding: 0.5 });
+    }, 50);
+  }, [fitView]);
+
   const handleResetCanvas = useCallback(() => {
     if (window.confirm(t('reset_confirm'))) {
       setNodes([]);
@@ -412,6 +422,7 @@ function BlueprintStudio() {
     setActiveLogicFilters([]);
     setActiveEdgeFilters([]);
     setActiveTagFilters([]);
+    setSearchQuery('');
     setOpenMenuType(null);
   }, []);
 
@@ -540,17 +551,62 @@ function BlueprintStudio() {
       setIsDemoMode(false);
       setOpenMenuType(null);
       
-      setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 400 }), 50);
+      if (viewType === 'canvas') {
+        setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 400 }), 50);
+      }
     };
     reader.readAsBinaryString(file);
   };
 
-  const nodesWithActions = useMemo(() => nodes.map(n => ({
+  // Helper function to check if a node matches search and category/tag filters
+  const isNodeVisible = useCallback((node: Node<NodeData>) => {
+    const { data } = node;
+    const isTable = data.cardType === NodeCardType.TABLE;
+    const isLogic = data.cardType === NodeCardType.LOGIC_NOTE;
+
+    // 1. Category Filters
+    if (isTable && activeTableFilters.length > 0) {
+      if (activeTableFilters.includes(HIDE_ALL_VALUE)) return false;
+      if (data.categoryId && !activeTableFilters.includes(data.categoryId)) return false;
+    }
+    if (isLogic && activeLogicFilters.length > 0) {
+      if (activeLogicFilters.includes(HIDE_ALL_VALUE)) return false;
+      if (data.categoryId && !activeLogicFilters.includes(data.categoryId)) return false;
+    }
+
+    // 2. Tag Filters
+    if (activeTagFilters.length > 0) {
+      if (activeTagFilters.includes(HIDE_ALL_VALUE)) return false;
+      const hasMatch = data.tags?.some(tagId => activeTagFilters.includes(tagId));
+      if (!hasMatch) return false;
+    }
+
+    // 3. Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchesLabel = data.label.toLowerCase().includes(q);
+      const matchesDesc = data.description?.toLowerCase().includes(q);
+      const matchesFields = data.columns?.some(c => c.name.toLowerCase().includes(q));
+      const matchesComment = data.comment?.toLowerCase().includes(q);
+      const matchesTags = data.tags?.some(tid => {
+        const tObj = settings.tags.find(tag => tag.id === tid);
+        return tObj?.name.toLowerCase().includes(q);
+      });
+
+      if (!matchesLabel && !matchesDesc && !matchesFields && !matchesComment && !matchesTags) return false;
+    }
+
+    return true;
+  }, [activeTableFilters, activeLogicFilters, activeTagFilters, searchQuery, settings.tags]);
+
+  const filteredNodes = useMemo(() => nodes.filter(isNodeVisible), [nodes, isNodeVisible]);
+
+  const nodesWithActions = useMemo(() => filteredNodes.map(n => ({
     ...n, data: { 
       ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
       settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters
     }
-  })), [nodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters]);
+  })), [filteredNodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters]);
 
   const edgesWithActions = useMemo(() => edges.map(e => {
     const sourceNode = nodes.find(n => n.id === e.source);
@@ -612,12 +668,95 @@ function BlueprintStudio() {
     setShowStudioSettings(null);
   };
 
+  const CatalogView = () => {
+    const categories = [...settings.tableCategories, ...settings.logicCategories];
+    
+    return (
+      <div className="w-full h-full overflow-y-auto px-6 py-32 lg:px-12 animate-in fade-in duration-500 custom-scrollbar" style={{ backgroundColor: appearance.canvasBgColor }}>
+        {/* Search Bar in Catalog */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+              <Search size={22} strokeWidth={2.5} />
+            </div>
+            <input 
+              type="text" 
+              placeholder={t('search_placeholder')} 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-16 pl-16 pr-8 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full shadow-lg shadow-slate-200/50 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder-slate-300" 
+            />
+          </div>
+        </div>
+
+        {categories.map((cat) => {
+          const catNodes = filteredNodes.filter(n => n.data.categoryId === cat.id);
+          if (catNodes.length === 0) return null;
+
+          return (
+            <section key={cat.id} className="max-w-7xl mx-auto mb-16 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center gap-4 mb-6 sticky top-0 py-4 bg-inherit z-20">
+                <div className="w-4 h-4 rounded-sm shadow-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex-1">{cat.name}</h2>
+                <div className="px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-sm">
+                  {catNodes.length} Nodes
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {catNodes.map(node => (
+                  <div key={node.id} className="relative group">
+                    <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50">
+                      <BlueprintCard 
+                        id={node.id} 
+                        data={{
+                          ...node.data, 
+                          settings, 
+                          appearance,
+                          onEdit: setEditingNode,
+                          onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id))
+                        }} 
+                        type="blueprintNode"
+                        dragging={false}
+                        zIndex={1}
+                        isConnectable={false}
+                        xPos={0}
+                        yPos={0}
+                        selected={false}
+                      />
+                    </div>
+                    {/* Catalog Overlay Actions */}
+                    <div className="absolute top-2 right-12 flex gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                       <button 
+                        onClick={() => handleLocateOnCanvas(node.id)}
+                        className="p-2 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-lg border border-slate-100 hover:bg-blue-600 hover:text-white transition-all transform active:scale-90"
+                        title={t('locate_on_canvas')}
+                       >
+                        <Crosshair size={14} strokeWidth={2.5} />
+                       </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+
+        {filteredNodes.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-32 text-slate-300">
+            <Search size={64} className="mb-4 opacity-20" />
+            <p className="text-xl font-bold">{t('no_results')}</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="w-full h-full bg-slate-50 relative overflow-hidden" style={{ backgroundColor: appearance.canvasBgColor }}>
       <main className="w-full h-full relative">
         {/* Unified Responsive Top Toolbar */}
         <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
-          {/* Action Group */}
+          {/* Action Group - Left */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
             {/* Create Node */}
             <div className="relative flex-shrink-0">
@@ -649,7 +788,7 @@ function BlueprintStudio() {
               )}
             </div>
 
-            {/* Import / Export - Relocated and Restyled */}
+            {/* Import / Export */}
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} 
@@ -687,7 +826,7 @@ function BlueprintStudio() {
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 lg:mx-1 flex-shrink-0" />
 
-            {/* General Settings (Black Branding/Setting Button) */}
+            {/* General Settings */}
             <button 
               onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
               className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-slate-700 ring-2 ring-transparent active:scale-95"
@@ -703,23 +842,7 @@ function BlueprintStudio() {
               </div>
             </button>
 
-            {/* Auto-Align - Relocated to the Action Group */}
-            <button 
-              onClick={handleAutoAlign} 
-              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
-              title={t('auto_align')}
-            >
-              <div className="flex-shrink-0">
-                <Maximize size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="hidden xl:flex items-center pr-1">
-                <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
-                  {appearance.language === 'en' ? 'Auto-Align' : '自动对齐'}
-                </span>
-              </div>
-            </button>
-
-            {/* Reset Filters - Distinct Rose Color */}
+            {/* Filters Group - Reset */}
             <button 
               onClick={handleResetFilters} 
               className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto"
@@ -808,6 +931,43 @@ function BlueprintStudio() {
               </div>
             ))}
           </div>
+
+          {/* Right Controls - Fixed Position */}
+          <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap shrink-0">
+             {/* View Swap - Important Toggle */}
+             <button 
+              onClick={() => setViewType(viewType === 'canvas' ? 'catalog' : 'canvas')} 
+              className={`flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-indigo-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-indigo-500/30 ring-2 ring-transparent active:scale-95 ${viewType === 'catalog' ? 'bg-slate-900 border-slate-700' : ''}`}
+              title={t('view_swap')}
+            >
+              <div className="flex-shrink-0">
+                {viewType === 'canvas' ? <LayoutList size={22} strokeWidth={2.5} /> : <MapIcon size={22} strokeWidth={2.5} />}
+              </div>
+              <div className="hidden xl:flex items-center pr-1">
+                <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
+                  {t('view_swap')}
+                </span>
+              </div>
+            </button>
+
+            {/* Auto-Align - Only in Canvas */}
+            {viewType === 'canvas' && (
+              <button 
+                onClick={handleAutoAlign} 
+                className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
+                title={t('auto_align')}
+              >
+                <div className="flex-shrink-0">
+                  <Maximize size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="hidden xl:flex items-center pr-1">
+                  <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
+                    {appearance.language === 'en' ? 'Auto-Align' : '自动对齐'}
+                  </span>
+                </div>
+              </button>
+            )}
+          </div>
         </div>
 
         {isDemoMode && (
@@ -825,30 +985,36 @@ function BlueprintStudio() {
           </div>
         )}
 
-        <ReactFlow
-          nodes={nodesWithActions}
-          edges={edgesWithActions}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          fitViewOptions={{ padding: CANVAS_PADDING }}
-          minZoom={0.05}
-          maxZoom={4}
-          onPaneClick={() => setOpenMenuType(null)}
-          onMoveStart={() => setOpenMenuType(null)}
-          className="bg-transparent"
-          defaultEdgeOptions={{ 
-            type: 'blueprintEdge',
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' }
-          }}
-        >
-          <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
-          <Controls position="bottom-right" />
-        </ReactFlow>
-        <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
+        {viewType === 'canvas' ? (
+          <>
+            <ReactFlow
+              nodes={nodesWithActions}
+              edges={edgesWithActions}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              fitView
+              fitViewOptions={{ padding: CANVAS_PADDING }}
+              minZoom={0.05}
+              maxZoom={4}
+              onPaneClick={() => setOpenMenuType(null)}
+              onMoveStart={() => setOpenMenuType(null)}
+              className="bg-transparent"
+              defaultEdgeOptions={{ 
+                type: 'blueprintEdge',
+                markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' }
+              }}
+            >
+              <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
+              <Controls position="bottom-right" />
+            </ReactFlow>
+            <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
+          </>
+        ) : (
+          <CatalogView />
+        )}
       </main>
 
       {editingNode && (

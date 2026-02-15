@@ -88,7 +88,14 @@ export const translations = {
     pos_top: "Top",
     pos_bottom: "Bottom",
     add_nodes: "Add Nodes",
-    import_export: "Import / Export"
+    import_export: "Import / Export",
+    view_canvas: "Canvas View",
+    view_catalog: "Catalog View",
+    view_swap: "View Swap",
+    locate_on_canvas: "Locate on Canvas",
+    search_placeholder: "Search nodes by name, field, or tag...",
+    search_label: "Search",
+    no_results: "No nodes found matching your search."
   },
   zh: {
     all: "显示全部",
@@ -179,6 +186,13 @@ export const translations = {
     pos_top: "上方",
     pos_bottom: "下方",
     add_nodes: "新增节点",
-    import_export: "导入 / 导出"
+    import_export: "导入 / 导出",
+    view_canvas: "画布视图",
+    view_catalog: "清单视图",
+    view_swap: "视图切换",
+    locate_on_canvas: "在画布中定位",
+    search_placeholder: "搜索节点名称、字段或标签...",
+    search_label: "搜索",
+    no_results: "没有找到匹配的节点。"
   }
 };
