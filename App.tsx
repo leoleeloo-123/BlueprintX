@@ -719,6 +719,14 @@ function BlueprintStudio() {
                       <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
                       {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).length === 0 && <Check size={14} />}
                     </button>
+                    {/* Hide All Option */}
+                    <button 
+                      onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} 
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600"
+                    >
+                      <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-900" />{t('hide_all')}</div>
+                      {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).includes(HIDE_ALL_VALUE) && <Check size={14} />}
+                    </button>
                     <div className="h-px bg-slate-50 my-1 mx-4" />
                     {(type === 'tag' ? settings.tags : type === 'table' ? settings.tableCategories : type === 'logic' ? settings.logicCategories : settings.connectionTypes).map((item: any) => (
                       <button key={item.id} onClick={() => toggleMultiFilter(item.id, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600">
