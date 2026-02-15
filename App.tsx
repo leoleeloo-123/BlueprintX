@@ -620,11 +620,11 @@ function BlueprintStudio() {
         <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
           {/* Logo & Filter Group */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
-            {/* Branding Logo - Restored Beautiful Colored Gradient Styling */}
-            <div className="flex items-center gap-1.5 lg:gap-3 bg-white/95 backdrop-blur-md px-2 py-1.5 lg:px-4 lg:py-2 rounded-full border border-slate-200 shadow-lg flex-shrink-0 transition-all duration-300">
-              <div className="w-7 h-7 lg:w-9 lg:h-9 bg-gradient-to-br from-indigo-500 via-blue-600 to-slate-900 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-200/50 relative overflow-hidden group/logo flex-shrink-0">
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover/logo:opacity-100 transition-opacity duration-300"></div>
-                <PackageOpen size={20} strokeWidth={2.2} className="relative z-10" />
+            {/* Branding Logo - Restored & Enhanced Vibrant Colored Gradient Styling */}
+            <div className="flex items-center gap-1.5 lg:gap-3 bg-white/95 backdrop-blur-md px-2 py-1.5 lg:px-4 lg:py-2 rounded-full border border-slate-200 shadow-lg flex-shrink-0 transition-all duration-300 ring-1 ring-slate-100/50">
+              <div className="w-7 h-7 lg:w-9 lg:h-9 bg-gradient-to-br from-indigo-500 via-blue-600 to-slate-900 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group/logo flex-shrink-0 ring-1 ring-white/20">
+                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover/logo:opacity-100 transition-opacity duration-300 shadow-inner"></div>
+                <PackageOpen size={20} strokeWidth={2.5} className="relative z-10 drop-shadow-md" />
               </div>
               <h1 className="text-lg lg:text-xl font-black text-slate-900 tracking-tight leading-none hidden xl:block">WhiteBox</h1>
             </div>
@@ -642,11 +642,11 @@ function BlueprintStudio() {
                 <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                   <button onClick={() => addNode(NodeCardType.TABLE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                     <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Database size={16} /></div>
-                    {t('data_table')}
+                    <span className="text-left">{t('data_table')}</span>
                   </button>
                   <button onClick={() => addNode(NodeCardType.LOGIC_NOTE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors">
                     <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></div>
-                    {t('logic_node')}
+                    <span className="text-left">{t('logic_node')}</span>
                   </button>
                 </div>
               )}
@@ -706,32 +706,49 @@ function BlueprintStudio() {
                   </div>
                   <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === type ? 'rotate-180' : ''} hidden xl:block`} />
                   
-                  {/* Clean, Non-Stacking Numeric Badge for Mobile Viewport */}
+                  {/* Fixed Numeric Badge for Mobile Viewport - Anti-stacking fix */}
                   {getFilterCount(type) > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 text-[8px] font-black text-white xl:hidden shadow-sm border border-white z-20 leading-none">
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white xl:hidden shadow-sm border border-white z-20 leading-none">
                       {getFilterCount(type)}
                     </span>
                   )}
                 </button>
                 {openMenuType === type && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                    <button onClick={() => (type === 'tag' ? setActiveTagFilters([]) : type === 'table' ? setActiveTableFilters([]) : type === 'logic' ? setActiveLogicFilters([]) : setActiveEdgeFilters([]))} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600">
-                      <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
-                      {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).length === 0 && <Check size={14} />}
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                    {/* All Items Option */}
+                    <button 
+                      onClick={() => (type === 'tag' ? setActiveTagFilters([]) : type === 'table' ? setActiveTableFilters([]) : type === 'logic' ? setActiveLogicFilters([]) : setActiveEdgeFilters([]))} 
+                      className="w-full flex items-start justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600 text-left"
+                    >
+                      <div className="flex items-start gap-3 flex-1 text-left">
+                        <div className="w-2.5 h-2.5 rounded-full bg-slate-200 mt-1.5 shrink-0" />
+                        <span className="flex-1 leading-tight text-left">{t('all')}</span>
+                      </div>
+                      {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).length === 0 && <Check size={14} className="mt-1 shrink-0 ml-2" />}
                     </button>
-                    {/* Hide All Option */}
+                    {/* Hide All Option - Restored consistently */}
                     <button 
                       onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} 
-                      className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600"
+                      className="w-full flex items-start justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600 text-left"
                     >
-                      <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-900" />{t('hide_all')}</div>
-                      {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).includes(HIDE_ALL_VALUE) && <Check size={14} />}
+                      <div className="flex items-start gap-3 flex-1 text-left">
+                        <div className="w-2.5 h-2.5 rounded-full bg-slate-900 mt-1.5 shrink-0" />
+                        <span className="flex-1 leading-tight text-left">{t('hide_all')}</span>
+                      </div>
+                      {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).includes(HIDE_ALL_VALUE) && <Check size={14} className="mt-1 shrink-0 ml-2" />}
                     </button>
                     <div className="h-px bg-slate-50 my-1 mx-4" />
                     {(type === 'tag' ? settings.tags : type === 'table' ? settings.tableCategories : type === 'logic' ? settings.logicCategories : settings.connectionTypes).map((item: any) => (
-                      <button key={item.id} onClick={() => toggleMultiFilter(item.id, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600">
-                        <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />{item.name}</div>
-                        {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).includes(item.id) && <Check size={14} />}
+                      <button 
+                        key={item.id} 
+                        onClick={() => toggleMultiFilter(item.id, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} 
+                        className="w-full flex items-start justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600 text-left"
+                      >
+                        <div className="flex items-start gap-3 flex-1 text-left">
+                          <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="flex-1 leading-tight text-left">{item.name}</span>
+                        </div>
+                        {(type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters).includes(item.id) && <Check size={14} className="mt-1 shrink-0 ml-2" />}
                       </button>
                     ))}
                   </div>
@@ -762,17 +779,17 @@ function BlueprintStudio() {
                 <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                   <button onClick={exportToExcel} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
                     <Download size={16} className="text-blue-600" />
-                    {t('export_project')}
+                    <span className="text-left">{t('export_project')}</span>
                   </button>
                   <label className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                     <Upload size={16} className="text-emerald-600" />
-                    {t('import_xlsx')}
+                    <span className="text-left">{t('import_xlsx')}</span>
                     <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
                   </label>
                   <div className="h-px bg-slate-50 my-1 mx-4" />
-                  <button onClick={handleResetCanvas} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors">
+                  <button onClick={handleResetCanvas} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left">
                     <Trash2 size={16} />
-                    {t('reset_canvas')}
+                    <span className="text-left">{t('reset_canvas')}</span>
                   </button>
                 </div>
               )}
