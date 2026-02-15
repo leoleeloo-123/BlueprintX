@@ -25,8 +25,7 @@ import { BlueprintCard } from './components/BlueprintCard.tsx';
 import { BlueprintEdge } from './components/BlueprintEdge.tsx';
 import { EditorModal } from './components/EditorModal.tsx';
 import { EdgeEditorModal } from './components/EdgeEditorModal.tsx';
-import { SettingsModal } from './components/SettingsModal.tsx';
-import { GeneralSettingsModal } from './components/GeneralSettingsModal.tsx';
+import { StudioSettingsModal } from './components/StudioSettingsModal.tsx';
 import { Legend } from './components/Legend.tsx';
 
 const nodeTypes = { blueprintNode: BlueprintCard };
@@ -350,8 +349,7 @@ function BlueprintStudio() {
 
   const [editingNode, setEditingNode] = useState<string | null>(null);
   const [editingEdge, setEditingEdge] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showGeneralSettings, setShowGeneralSettings] = useState(false);
+  const [showStudioSettings, setShowStudioSettings] = useState<any>(null); // null or { initialTab: string }
 
   const t = (key: keyof typeof translations.en) => translations[appearance.language][key] || key;
 
@@ -603,6 +601,12 @@ function BlueprintStudio() {
     }
   };
 
+  const handleSaveStudioSettings = (newSettings: GlobalSettings, newAppearance: AppearanceSettings) => {
+    setSettings(newSettings);
+    setAppearance(newAppearance);
+    setShowStudioSettings(null);
+  };
+
   return (
     <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50 relative" style={{ backgroundColor: appearance.canvasBgColor }}>
       <aside className="w-72 h-full bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
@@ -622,17 +626,13 @@ function BlueprintStudio() {
           <section className="flex flex-col gap-4">
             <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">{t('configuration')}</h2>
             <div className="flex flex-col gap-1">
-              <button onClick={() => setShowSettings(true)} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
+              <button onClick={() => setShowStudioSettings({ initialTab: 'general' })} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
                 <Settings2 size={18} />
-                <span>{t('global_config')}</span>
+                <span>{t('general_settings')}</span>
               </button>
               <button onClick={handleAutoAlign} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm cursor-pointer rounded-lg hover:bg-slate-50 w-full text-left">
                 <Layers size={18} />
                 <span>{t('auto_align')}</span>
-              </button>
-              <button onClick={() => setShowGeneralSettings(true)} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
-                <Sliders size={18} />
-                <span>{t('general_setting')}</span>
               </button>
             </div>
           </section>
@@ -876,12 +876,14 @@ function BlueprintStudio() {
         />
       )}
 
-      {showSettings && (
-        <SettingsModal settings={settings} onClose={() => setShowSettings(false)} onSave={setSettings} language={appearance.language} />
-      )}
-
-      {showGeneralSettings && (
-        <GeneralSettingsModal appearance={appearance} onClose={() => setShowGeneralSettings(false)} onSave={setAppearance} />
+      {showStudioSettings && (
+        <StudioSettingsModal 
+          settings={settings} 
+          appearance={appearance}
+          initialTab={showStudioSettings.initialTab}
+          onClose={() => setShowStudioSettings(null)} 
+          onSave={handleSaveStudioSettings} 
+        />
       )}
     </div>
   );
