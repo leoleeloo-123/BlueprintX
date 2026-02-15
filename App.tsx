@@ -15,7 +15,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown, Maximize } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
@@ -699,6 +699,22 @@ function BlueprintStudio() {
               <div className="hidden xl:flex items-center pr-1">
                 <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
                   {appearance.language === 'en' ? 'Setting' : '设置'}
+                </span>
+              </div>
+            </button>
+
+            {/* Auto-Align - Relocated to the Action Group */}
+            <button 
+              onClick={handleAutoAlign} 
+              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
+              title={t('auto_align')}
+            >
+              <div className="flex-shrink-0">
+                <Maximize size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+              </div>
+              <div className="hidden xl:flex items-center pr-1">
+                <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
+                  {appearance.language === 'en' ? 'Auto-Align' : '自动对齐'}
                 </span>
               </div>
             </button>
