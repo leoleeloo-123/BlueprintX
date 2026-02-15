@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, { 
   Background, 
@@ -620,7 +619,7 @@ function BlueprintStudio() {
         <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
           {/* Action Group */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
-            {/* Create Node - Updated style with label */}
+            {/* Create Node */}
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} 
@@ -645,6 +644,42 @@ function BlueprintStudio() {
                   <button onClick={() => addNode(NodeCardType.LOGIC_NOTE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors">
                     <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></div>
                     <span className="text-left">{t('logic_node')}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Import / Export - Relocated and Restyled */}
+            <div className="relative flex-shrink-0">
+              <button 
+                onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} 
+                className={`flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-emerald-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-emerald-500/30 ring-2 ring-transparent active:scale-95 ${openMenuType === 'io' ? 'bg-slate-900 border-slate-700' : ''}`}
+                title={t('import_export')}
+              >
+                <div className="flex-shrink-0">
+                  <ArrowUpDown size={22} strokeWidth={2.5} className="group-hover:translate-y-[-2px] transition-transform duration-300" />
+                </div>
+                <div className="hidden xl:flex items-center pr-1">
+                  <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
+                    {appearance.language === 'en' ? 'Import / Export' : '导入 / 导出'}
+                  </span>
+                </div>
+              </button>
+              {openMenuType === 'io' && (
+                <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                  <button onClick={exportToExcel} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                    <Download size={16} className="text-blue-600" />
+                    <span className="text-left">{t('export_project')}</span>
+                  </button>
+                  <label className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                    <Upload size={16} className="text-emerald-600" />
+                    <span className="text-left">{t('import_xlsx')}</span>
+                    <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
+                  </label>
+                  <div className="h-px bg-slate-50 my-1 mx-4" />
+                  <button onClick={handleResetCanvas} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left">
+                    <Trash2 size={16} />
+                    <span className="text-left">{t('reset_canvas')}</span>
                   </button>
                 </div>
               )}
@@ -756,44 +791,6 @@ function BlueprintStudio() {
                 )}
               </div>
             ))}
-          </div>
-
-          {/* Right Controls */}
-          <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap shrink-0">
-            <div className="relative flex-shrink-0">
-              <button 
-                onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} 
-                className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto"
-                title="Project Actions"
-              >
-                <div className="p-1.5 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors flex-shrink-0">
-                  <ArrowUpDown size={16} strokeWidth={2.5} />
-                </div>
-                <div className="flex flex-col items-start pr-1 hidden xl:flex">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Project</span>
-                  <span className="text-xs font-bold text-slate-700">Import/Export</span>
-                </div>
-                <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === 'io' ? 'rotate-180' : ''} hidden xl:block`} />
-              </button>
-              {openMenuType === 'io' && (
-                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                  <button onClick={exportToExcel} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                    <Download size={16} className="text-blue-600" />
-                    <span className="text-left">{t('export_project')}</span>
-                  </button>
-                  <label className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                    <Upload size={16} className="text-emerald-600" />
-                    <span className="text-left">{t('import_xlsx')}</span>
-                    <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
-                  </label>
-                  <div className="h-px bg-slate-50 my-1 mx-4" />
-                  <button onClick={handleResetCanvas} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left">
-                    <Trash2 size={16} />
-                    <span className="text-left">{t('reset_canvas')}</span>
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 

@@ -1,4 +1,3 @@
-
 export const translations = {
   en: {
     all: "All Categories",
@@ -88,7 +87,8 @@ export const translations = {
     pos_right: "Right",
     pos_top: "Top",
     pos_bottom: "Bottom",
-    add_nodes: "Add Nodes"
+    add_nodes: "Add Nodes",
+    import_export: "Import / Export"
   },
   zh: {
     all: "显示全部",
@@ -178,6 +178,7 @@ export const translations = {
     pos_right: "右侧",
     pos_top: "上方",
     pos_bottom: "下方",
-    add_nodes: "新增节点"
+    add_nodes: "新增节点",
+    import_export: "导入 / 导出"
   }
 };
