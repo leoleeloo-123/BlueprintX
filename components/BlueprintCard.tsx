@@ -70,11 +70,11 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
     return tag ? (
       <div 
         key={tag.id} 
-        className="flex items-center justify-end h-6 rounded-l-md shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/30 transition-all duration-300 w-3 group-hover:w-auto group-hover:min-w-[60px] group-hover:px-2 group-hover:shadow-[-4px_2px_8px_rgba(0,0,0,0.15)]" 
+        className="flex items-center justify-end h-7 rounded-l-md shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/30 transition-all duration-300 w-4 group-hover:w-auto group-hover:min-w-[80px] group-hover:px-2.5 group-hover:shadow-[-4px_2px_8px_rgba(0,0,0,0.15)] origin-right" 
         style={{ backgroundColor: tag.color }}
         title={tag.name}
       >
-        <span className="text-white text-[8px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden">
+        <span className="text-white text-[9px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden leading-none">
           {tag.name}
         </span>
       </div>
@@ -83,8 +83,9 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   return (
     <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
-      {/* Visual Tag Tabs - Protruding from the left and expanding on group hover */}
-      <div className="absolute top-14 right-full flex flex-col items-end gap-1.5 pointer-events-none z-10">
+      {/* Visual Tag Tabs - Protruding from the left and expanding on group hover.
+          Positioned lower (top-16) to align with white content area and avoid header overlap. */}
+      <div className="absolute top-16 right-full flex flex-col items-end gap-1.5 pointer-events-none z-10">
         {tagIndicators}
       </div>
 

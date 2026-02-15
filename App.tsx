@@ -138,7 +138,7 @@ function BlueprintStudio() {
   const [activeEdgeFilter, setActiveEdgeFilter] = useState<string | null>(null);
   const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
   
-  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | null>(null);
+  const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | 'add' | null>(null);
 
   useEffect(() => {
     if (!hasPerformedInitialFit.current && nodes.length > 0) {
@@ -241,6 +241,7 @@ function BlueprintStudio() {
         tags: []
       },
     }));
+    setOpenFilterType(null);
   };
 
   const exportToExcel = () => {
@@ -263,7 +264,13 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tags || []), "Tags");
 
     const now = new Date();
-    const filename = `BlueprintX_${now.getTime()}.xlsx`;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dateStr = `${now.getFullYear().toString().slice(-2)}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const timeStr = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+    const org = appearance.organizationName.replace(/\s+/g, '_') || 'Org';
+    const user = appearance.userName.replace(/\s+/g, '_') || 'User';
+    
+    const filename = `BlueprintX_${org}_${user}_${dateStr}_${timeStr}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
 
@@ -380,20 +387,6 @@ function BlueprintStudio() {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-8">
           <section className="flex flex-col gap-4">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">{t('studio_canvas')}</h2>
-            <div className="flex flex-col gap-2">
-              <button onClick={() => addNode(NodeCardType.TABLE)} className="group flex items-center gap-3 px-4 py-3 bg-white border border-slate-100 text-slate-700 rounded-xl hover:border-blue-200 hover:bg-blue-50/50 transition-all text-sm font-semibold shadow-sm hover:shadow-md">
-                <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors"><Plus size={16} /></div>
-                {t('data_table')}
-              </button>
-              <button onClick={() => addNode(NodeCardType.LOGIC_NOTE)} className="group flex items-center gap-3 px-4 py-3 bg-white border border-slate-100 text-slate-700 rounded-xl hover:border-purple-200 hover:bg-purple-50/50 transition-all text-sm font-semibold shadow-sm hover:shadow-md">
-                <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition-colors"><Plus size={16} /></div>
-                {t('logic_node')}
-              </button>
-            </div>
-          </section>
-
-          <section className="flex flex-col gap-4">
             <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] px-1">{t('configuration')}</h2>
             <div className="flex flex-col gap-1">
               <button onClick={() => setShowSettings(true)} className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors text-sm rounded-lg hover:bg-slate-50 w-full text-left">
@@ -427,8 +420,38 @@ function BlueprintStudio() {
       </aside>
 
       <main className="flex-1 min-h-0 relative">
-        {/* Canvas View Filters */}
-        <div className="absolute top-6 left-6 z-30 flex gap-3">
+        {/* Canvas View Tools & Filters */}
+        <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
+          {/* Add Node Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setOpenFilterType(openFilterType === 'add' ? null : 'add')}
+              className={`w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openFilterType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}
+            >
+              <Plus size={24} />
+            </button>
+            {openFilterType === 'add' && (
+              <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <button 
+                  onClick={() => addNode(NodeCardType.TABLE)} 
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Database size={16} /></div>
+                  {t('data_table')}
+                </button>
+                <button 
+                  onClick={() => addNode(NodeCardType.LOGIC_NOTE)} 
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                >
+                  <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></div>
+                  {t('logic_node')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="h-6 w-px bg-slate-200 mx-1" />
+
           {/* Tag Filter */}
           <div className="relative">
             <button 
