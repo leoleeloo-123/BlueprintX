@@ -472,7 +472,7 @@ function BlueprintStudio() {
               <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
             </div>
             <div className="flex flex-col items-start pr-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Filters</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('filters_label')}</span>
               <span className="text-xs font-bold text-slate-700 group-hover:text-red-600 transition-colors">{t('reset_filters')}</span>
             </div>
           </button>

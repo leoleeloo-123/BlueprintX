@@ -64,21 +64,31 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   const handleClasses = `!w-4 !h-4 !bg-slate-400 !border-2 !border-white shadow-sm transition-all duration-200 hover:scale-125 hover:!bg-blue-500 z-50 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
 
-  // Resolve Tag UI components as side tabs that expand on hover
+  // Resolve Tag UI components as side tabs that expand on hover OR when active filter
   const tagIndicators = (data.tags || []).map(tagId => {
     const tag = data.settings?.tags.find(t => t.id === tagId);
-    return tag ? (
+    if (!tag) return null;
+
+    const isActiveTag = data.activeTagFilter === tag.id;
+    
+    return (
       <div 
         key={tag.id} 
-        className="flex items-center justify-end h-7 rounded-l-md shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/30 transition-all duration-300 w-4 group-hover:w-auto group-hover:min-w-[80px] group-hover:px-2.5 group-hover:shadow-[-4px_2px_8px_rgba(0,0,0,0.15)] origin-right" 
+        className={`flex items-center justify-end h-7 rounded-l-lg shadow-[-2px_1px_4px_rgba(0,0,0,0.1)] border-y border-l border-white/20 transition-all duration-300 origin-right ${
+          isActiveTag 
+            ? 'w-auto px-3 shadow-[-4px_2px_10px_rgba(0,0,0,0.2)] ring-1 ring-white/30' 
+            : 'w-3 group-hover:w-auto group-hover:px-3 group-hover:shadow-[-4px_2px_10px_rgba(0,0,0,0.2)]'
+        }`} 
         style={{ backgroundColor: tag.color }}
         title={tag.name}
       >
-        <span className="text-white text-[9px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden leading-none">
+        <span className={`text-white text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all duration-300 overflow-hidden leading-none ${
+          isActiveTag ? 'opacity-100 max-w-[120px]' : 'opacity-0 group-hover:opacity-100 group-hover:max-w-[120px] max-w-0'
+        }`}>
           {tag.name}
         </span>
       </div>
-    ) : null;
+    );
   });
 
   return (
