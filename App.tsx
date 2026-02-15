@@ -203,6 +203,7 @@ function BlueprintStudio() {
   const { fitView } = useReactFlow();
   const hasPerformedInitialFit = useRef(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const filterBarRef = useRef<HTMLDivElement>(null);
 
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -295,6 +296,25 @@ function BlueprintStudio() {
   });
   
   const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | 'add' | null>(null);
+
+  // Click outside to close any open filter dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (filterBarRef.current && !filterBarRef.current.contains(event.target as Node)) {
+        setOpenFilterType(null);
+      }
+    }
+
+    if (openFilterType) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openFilterType]);
 
   useEffect(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -648,7 +668,7 @@ function BlueprintStudio() {
           </div>
         )}
 
-        <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
+        <div className="absolute top-6 left-6 z-30 flex items-center gap-3" ref={filterBarRef}>
           <div className="relative">
             <button onClick={() => setOpenFilterType(openFilterType === 'add' ? null : 'add')} className={`w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openFilterType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}>
               <Plus size={24} />
@@ -828,6 +848,8 @@ function BlueprintStudio() {
           fitViewOptions={{ padding: CANVAS_PADDING }}
           minZoom={0.05}
           maxZoom={4}
+          onPaneClick={() => setOpenFilterType(null)}
+          onMoveStart={() => setOpenFilterType(null)}
           className="bg-transparent"
           defaultEdgeOptions={{ 
             type: 'blueprintEdge',
