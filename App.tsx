@@ -461,7 +461,7 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.logicCategories), "LogicCategories");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.connectionTypes), "ConnectionTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.sheet_to_json(settings.fieldTypes), "FieldTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tags || []), "Tags");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([appearance]), "Appearance");
     
@@ -645,7 +645,7 @@ function BlueprintStudio() {
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 lg:mx-1 flex-shrink-0" />
 
-            {/* General Settings (Black Branding/Setting Button) - Moved to left group as requested */}
+            {/* General Settings (Black Branding/Setting Button) */}
             <button 
               onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
               className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group flex-shrink-0 aspect-square border border-slate-700 ring-2 ring-transparent active:scale-95"
@@ -728,7 +728,7 @@ function BlueprintStudio() {
                     {(type === 'tag' ? settings.tags : type === 'table' ? settings.tableCategories : type === 'logic' ? settings.logicCategories : settings.connectionTypes).map((item: any) => (
                       <button 
                         key={item.id} 
-                        onClick={() => toggleMultiFilter(item.id, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} 
+                        onClick={() => toggleMultiFilter(item.id, (type === 'tag' ? activeTagFilters : type === 'table' ? activeTableFilters : type === 'logic' ? activeLogicFilters : activeEdgeFilters), (type === 'tag' ? setActiveTagFilters : type === 'tag' ? setActiveTagFilters : type === 'table' ? setActiveTableFilters : type === 'logic' ? setActiveLogicFilters : setActiveEdgeFilters))} 
                         className="w-full flex items-start justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 text-slate-600 text-left"
                       >
                         <div className="flex items-start gap-3 flex-1 text-left">
@@ -798,17 +798,6 @@ function BlueprintStudio() {
           </div>
         )}
 
-        {/* Watermark Logo Branding - Relocated to Bottom-Right, Gear Icon, Black Style */}
-        <div className="absolute bottom-6 right-6 z-40 flex items-center gap-3 bg-slate-900/5 backdrop-blur-[2px] px-4 py-2 rounded-2xl border border-slate-900/10 transition-all duration-500 hover:bg-slate-900/10 hover:backdrop-blur-md group/watermark opacity-40 hover:opacity-100 pointer-events-auto cursor-default select-none shadow-sm hover:shadow-xl">
-          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg relative overflow-hidden group-hover/watermark:rotate-45 transition-transform duration-700">
-            <Settings2 size={20} strokeWidth={2.5} className="relative z-10" />
-          </div>
-          <div className="flex flex-col items-start leading-none">
-            <h1 className="text-lg lg:text-xl font-black text-slate-900 tracking-tighter transition-colors">WhiteBox</h1>
-            <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-0.5">Documentation Studio</span>
-          </div>
-        </div>
-
         <ReactFlow
           nodes={nodesWithActions}
           edges={edgesWithActions}
@@ -830,7 +819,7 @@ function BlueprintStudio() {
           }}
         >
           <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
-          <Controls position="bottom-right" style={{ marginBottom: '60px' }} />
+          <Controls position="bottom-right" />
         </ReactFlow>
         <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
       </main>
