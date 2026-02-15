@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
@@ -75,6 +75,9 @@ const DEFAULT_APPEARANCE: AppearanceSettings = {
 const PROJECT_STORAGE_KEY = 'whitebox_project_v1';
 const APPEARANCE_STORAGE_KEY = 'whitebox_appearance_v1';
 const HIDE_ALL_VALUE = '__HIDE_ALL__';
+
+// Consistent padding for all fitView operations to account for top filters
+const CANVAS_PADDING = 0.35;
 
 function BlueprintStudio() {
   const { fitView } = useReactFlow();
@@ -143,7 +146,7 @@ function BlueprintStudio() {
   useEffect(() => {
     if (!hasPerformedInitialFit.current && nodes.length > 0) {
       const timer = setTimeout(() => {
-        fitView({ padding: 0.2 });
+        fitView({ padding: CANVAS_PADDING });
         hasPerformedInitialFit.current = true;
       }, 200);
       return () => clearTimeout(timer);
@@ -201,7 +204,7 @@ function BlueprintStudio() {
   };
 
   const handleAutoAlign = useCallback(() => {
-    fitView({ padding: 0.2, duration: 800 });
+    fitView({ padding: CANVAS_PADDING, duration: 800 });
   }, [fitView]);
 
   const handleResetCanvas = useCallback(() => {
@@ -215,6 +218,14 @@ function BlueprintStudio() {
       hasPerformedInitialFit.current = false;
     }
   }, [t]);
+
+  const handleResetFilters = useCallback(() => {
+    setActiveTableFilter(null);
+    setActiveLogicFilter(null);
+    setActiveEdgeFilter(null);
+    setActiveTagFilter(null);
+    setOpenFilterType(null);
+  }, []);
 
   const addNode = (type: NodeCardType) => {
     const id = Date.now().toString();
@@ -270,7 +281,6 @@ function BlueprintStudio() {
     const org = appearance.organizationName.replace(/\s+/g, '_') || 'Org';
     const user = appearance.userName.replace(/\s+/g, '_') || 'User';
     
-    // Updated prefix to WhiteBox while keeping requested structure
     const filename = `WhiteBox_${org}_${user}_${dateStr}_${timeStr}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
@@ -321,7 +331,7 @@ function BlueprintStudio() {
       setActiveEdgeFilter(null);
       setActiveTagFilter(null);
       
-      setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50);
+      setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 400 }), 50);
     };
     reader.readAsBinaryString(file);
   };
@@ -377,11 +387,9 @@ function BlueprintStudio() {
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-200 relative overflow-hidden group flex-shrink-0">
               <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              {/* Updated Logo to PackageOpen (Open White Box) */}
               <PackageOpen size={30} strokeWidth={2.2} className="relative z-10" />
             </div>
             <div className="overflow-hidden">
-              {/* Increased font size to 3xl to align with larger logo box height */}
               <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">WhiteBox</h1>
             </div>
           </div>
@@ -453,6 +461,21 @@ function BlueprintStudio() {
           </div>
 
           <div className="h-6 w-px bg-slate-200 mx-1" />
+
+          {/* Reset Filters Button - Adjusted to match filter styles for consistent alignment */}
+          <button 
+            onClick={handleResetFilters}
+            className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100"
+            title={t('reset_filters')}
+          >
+            <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
+              <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+            </div>
+            <div className="flex flex-col items-start pr-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Filters</span>
+              <span className="text-xs font-bold text-slate-700 group-hover:text-red-600 transition-colors">{t('reset_filters')}</span>
+            </div>
+          </button>
 
           {/* Tag Filter */}
           <div className="relative">
@@ -600,7 +623,7 @@ function BlueprintStudio() {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
-          fitViewOptions={{ padding: 0.2 }}
+          fitViewOptions={{ padding: CANVAS_PADDING }}
           className="bg-transparent"
           defaultEdgeOptions={{ 
             type: 'blueprintEdge',

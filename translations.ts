@@ -70,7 +70,8 @@ export const translations = {
     new_tag: "New Tag",
     tag_styles: "Tag Styles",
     assign_tags: "Assign Tags",
-    filter_tags: "Filter by Tag"
+    filter_tags: "Filter by Tag",
+    reset_filters: "Reset"
   },
   zh: {
     all: "显示全部",
@@ -142,6 +143,7 @@ export const translations = {
     new_tag: "新标签",
     tag_styles: "标签样式",
     assign_tags: "分配标签",
-    filter_tags: "按标签筛选"
+    filter_tags: "按标签筛选",
+    reset_filters: "重置"
   }
 };
