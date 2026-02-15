@@ -87,7 +87,8 @@ export const translations = {
     pos_left: "Left",
     pos_right: "Right",
     pos_top: "Top",
-    pos_bottom: "Bottom"
+    pos_bottom: "Bottom",
+    add_nodes: "Add Nodes"
   },
   zh: {
     all: "显示全部",
@@ -176,6 +177,7 @@ export const translations = {
     pos_left: "左侧",
     pos_right: "右侧",
     pos_top: "上方",
-    pos_bottom: "下方"
+    pos_bottom: "下方",
+    add_nodes: "新增节点"
   }
 };

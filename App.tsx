@@ -620,14 +620,21 @@ function BlueprintStudio() {
         <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
           {/* Action Group */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
-            {/* Create Node */}
+            {/* Create Node - Updated style with label */}
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} 
-                className={`w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 aspect-square flex-shrink-0 ${openMenuType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}
-                title="Add Component"
+                className={`flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 ${openMenuType === 'add' ? 'bg-slate-900' : ''}`}
+                title={t('add_nodes')}
               >
-                <Plus size={24} strokeWidth={2.5} />
+                <div className={`transition-transform duration-300 flex-shrink-0 ${openMenuType === 'add' ? 'rotate-45' : ''}`}>
+                  <Plus size={22} strokeWidth={2.5} />
+                </div>
+                <div className="hidden xl:flex items-center pr-1">
+                  <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
+                    {appearance.language === 'en' ? 'Add Nodes' : '新增节点'}
+                  </span>
+                </div>
               </button>
               {openMenuType === 'add' && (
                 <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
@@ -648,10 +655,17 @@ function BlueprintStudio() {
             {/* General Settings (Black Branding/Setting Button) */}
             <button 
               onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
-              className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group flex-shrink-0 aspect-square border border-slate-700 ring-2 ring-transparent active:scale-95"
+              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-slate-700 ring-2 ring-transparent active:scale-95"
               title={t('general_settings')}
             >
-              <Settings2 size={22} className="group-hover:rotate-90 transition-transform duration-500" />
+              <div className="flex-shrink-0">
+                <Settings2 size={22} className="group-hover:rotate-90 transition-transform duration-500" />
+              </div>
+              <div className="hidden xl:flex items-center pr-1">
+                <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
+                  {appearance.language === 'en' ? 'Setting' : '设置'}
+                </span>
+              </div>
             </button>
 
             {/* Reset Filters - Distinct Rose Color */}
