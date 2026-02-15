@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
@@ -72,8 +72,8 @@ const DEFAULT_APPEARANCE: AppearanceSettings = {
   isLegendExpanded: true
 };
 
-const PROJECT_STORAGE_KEY = 'blueprint_x_project_v1';
-const APPEARANCE_STORAGE_KEY = 'blueprint_x_appearance_v1';
+const PROJECT_STORAGE_KEY = 'whitebox_project_v1';
+const APPEARANCE_STORAGE_KEY = 'whitebox_appearance_v1';
 const HIDE_ALL_VALUE = '__HIDE_ALL__';
 
 function BlueprintStudio() {
@@ -270,7 +270,8 @@ function BlueprintStudio() {
     const org = appearance.organizationName.replace(/\s+/g, '_') || 'Org';
     const user = appearance.userName.replace(/\s+/g, '_') || 'User';
     
-    const filename = `BlueprintX_${org}_${user}_${dateStr}_${timeStr}.xlsx`;
+    // Updated prefix to WhiteBox while keeping requested structure
+    const filename = `WhiteBox_${org}_${user}_${dateStr}_${timeStr}.xlsx`;
     XLSX.writeFile(wb, filename);
   };
 
@@ -376,10 +377,11 @@ function BlueprintStudio() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 relative overflow-hidden group">
               <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <X size={24} strokeWidth={3} className="relative z-10" />
+              {/* Updated Logo to PackageOpen (Open White Box) */}
+              <PackageOpen size={24} strokeWidth={2.5} className="relative z-10" />
             </div>
             <div>
-              <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none uppercase">Blueprint-X</h1>
+              <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none uppercase">WhiteBox</h1>
               <p className="text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1.5">{t('documentation')}</p>
             </div>
           </div>

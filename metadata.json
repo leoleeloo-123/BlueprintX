@@ -1,5 +1,5 @@
 {
-  "name": "Blueprint-X",
-  "description": "A high-performance, canvas-based system documentation tool featuring custom nodes, relational mapping, and portable Excel serialization.",
+  "name": "WhiteBox",
+  "description": "A high-performance, canvas-based system documentation tool for data mapping and system logic, rebranding Blueprint-X for better transparency.",
   "requestFramePermissions": []
 }

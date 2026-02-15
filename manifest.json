@@ -1,7 +1,8 @@
+
 {
-  "name": "Blueprint-X Documentation Studio",
-  "short_name": "Blueprint-X",
-  "description": "Professional documentation studio for data blueprints and system logic.",
+  "name": "WhiteBox Documentation Studio",
+  "short_name": "WhiteBox",
+  "description": "Professional documentation studio for data blueprints and system logic, designed for transparency.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
