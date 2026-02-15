@@ -19,13 +19,11 @@ export const BlueprintEdge = ({
   const finalWidth = connType?.width || 2;
   const dashArray = connType?.dashStyle === 'dashed' ? '5,5' : connType?.dashStyle === 'dotted' ? '2,2' : undefined;
 
-  // Custom Label Positioning
-  // Logic: Instead of centering (translate -50%), we anchor the "near" end of the label to the line.
   let finalLabelX = labelX;
   let finalLabelY = labelY;
   let labelTransform = 'translate(-50%, -50%)';
 
-  const GAP = 12; // Small gap between handle and label text start
+  const GAP = 12;
 
   if (connType?.labelPosition === 'source') {
     if (sourcePosition === Position.Right) {
@@ -64,50 +62,65 @@ export const BlueprintEdge = ({
       labelTransform = 'translate(-50%, 0)';
     }
   } else {
-    // Default: Center
     labelTransform = `translate(-50%, -50%) translate(${finalLabelX}px,${finalLabelY}px)`;
   }
 
-  // Update transform for positional cases
   const finalTransform = connType?.labelPosition && connType.labelPosition !== 'center'
     ? `translate(${finalLabelX}px,${finalLabelY}px) ${labelTransform}`
     : labelTransform;
 
-  // Filtering Logic for Edges
+  // Filtering Logic for Edges - Multi
   let isFilteredOut = false;
   
-  if (data.activeEdgeFilter) {
-    if (data.activeEdgeFilter === HIDE_ALL_VALUE || data.typeId !== data.activeEdgeFilter) {
+  if (data.activeEdgeFilters && data.activeEdgeFilters.length > 0) {
+    if (data.activeEdgeFilters.includes(HIDE_ALL_VALUE) || (data.typeId && !data.activeEdgeFilters.includes(data.typeId))) {
       isFilteredOut = true;
     }
   }
   
-  if (data.activeTableFilter) {
-    if (data.activeTableFilter === HIDE_ALL_VALUE) {
-       isFilteredOut = true;
-    } else if (data.sourceCategoryId !== data.activeTableFilter || data.targetCategoryId !== data.activeTableFilter) {
-       isFilteredOut = true;
-    }
-  }
-  
-  if (data.activeLogicFilter) {
-    if (data.activeLogicFilter === HIDE_ALL_VALUE) {
-      isFilteredOut = true;
-    } else if (data.sourceCategoryId !== data.activeLogicFilter || data.targetCategoryId !== data.activeLogicFilter) {
-      isFilteredOut = true;
-    }
-  }
+  // Node-based filtering for edges
+  const tableFilters = data.activeTableFilters || [];
+  const logicFilters = data.activeLogicFilters || [];
+  const tagFilters = data.activeTagFilters || [];
 
-  if (data.activeTagFilter) {
-    if (data.activeTagFilter === HIDE_ALL_VALUE) {
-      isFilteredOut = true;
-    } else {
-      const sourceHasTag = data.sourceTags?.includes(data.activeTagFilter);
-      const targetHasTag = data.targetTags?.includes(data.activeTagFilter);
-      if (!sourceHasTag || !targetHasTag) {
-        isFilteredOut = true;
-      }
+  const isSourceFilteredOut = () => {
+    // Check table category
+    if (tableFilters.includes(HIDE_ALL_VALUE)) return true;
+    if (tableFilters.length > 0 && data.sourceCategoryId && !tableFilters.includes(data.sourceCategoryId)) return true;
+    
+    // Check logic category
+    if (logicFilters.includes(HIDE_ALL_VALUE)) return true;
+    if (logicFilters.length > 0 && data.sourceCategoryId && !logicFilters.includes(data.sourceCategoryId)) return true;
+
+    // Check tags
+    if (tagFilters.includes(HIDE_ALL_VALUE)) return true;
+    if (tagFilters.length > 0) {
+      const hasMatch = data.sourceTags?.some((t: string) => tagFilters.includes(t));
+      if (!hasMatch) return true;
     }
+    return false;
+  };
+
+  const isTargetFilteredOut = () => {
+    // Check table category
+    if (tableFilters.includes(HIDE_ALL_VALUE)) return true;
+    if (tableFilters.length > 0 && data.targetCategoryId && !tableFilters.includes(data.targetCategoryId)) return true;
+    
+    // Check logic category
+    if (logicFilters.includes(HIDE_ALL_VALUE)) return true;
+    if (logicFilters.length > 0 && data.targetCategoryId && !logicFilters.includes(data.targetCategoryId)) return true;
+
+    // Check tags
+    if (tagFilters.includes(HIDE_ALL_VALUE)) return true;
+    if (tagFilters.length > 0) {
+      const hasMatch = data.targetTags?.some((t: string) => tagFilters.includes(t));
+      if (!hasMatch) return true;
+    }
+    return false;
+  };
+
+  if (isSourceFilteredOut() || isTargetFilteredOut()) {
+    isFilteredOut = true;
   }
   
   const edgeOpacity = isFilteredOut ? 0.05 : 1;
@@ -128,7 +141,7 @@ export const BlueprintEdge = ({
           transform: finalTransform,
           pointerEvents: 'all',
           opacity: edgeOpacity,
-          zIndex: 1000, // Ensure it's above other elements
+          zIndex: 1000,
           transition: 'opacity 0.3s'
         }} className="nodrag nopan">
           <div className="flex flex-col items-center gap-1">

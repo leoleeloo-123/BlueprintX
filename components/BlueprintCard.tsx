@@ -13,7 +13,6 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   const isTable = data.cardType === NodeCardType.TABLE;
   const isLogic = data.cardType === NodeCardType.LOGIC_NOTE;
   
-  // Resolve dynamic category color
   let headerColor = '#ea580c'; 
   if (isTable) {
     const category = data.settings?.tableCategories.find(c => c.id === data.categoryId);
@@ -41,24 +40,32 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   // Filtering Logic
   let isFilteredOut = false;
   
-  // Category Filtering
-  if (isTable && data.activeTableFilter) {
-    if (data.activeTableFilter === HIDE_ALL_VALUE || data.categoryId !== data.activeTableFilter) {
+  // Category Filtering - Multi
+  if (isTable && data.activeTableFilters && data.activeTableFilters.length > 0) {
+    if (data.activeTableFilters.includes(HIDE_ALL_VALUE)) {
+      isFilteredOut = true;
+    } else if (data.categoryId && !data.activeTableFilters.includes(data.categoryId)) {
       isFilteredOut = true;
     }
   }
-  if (isLogic && data.activeLogicFilter) {
-    if (data.activeLogicFilter === HIDE_ALL_VALUE || data.categoryId !== data.activeLogicFilter) {
+  if (isLogic && data.activeLogicFilters && data.activeLogicFilters.length > 0) {
+    if (data.activeLogicFilters.includes(HIDE_ALL_VALUE)) {
+      isFilteredOut = true;
+    } else if (data.categoryId && !data.activeLogicFilters.includes(data.categoryId)) {
       isFilteredOut = true;
     }
   }
 
-  // Tag Filtering
-  if (data.activeTagFilter) {
-    if (data.activeTagFilter === HIDE_ALL_VALUE) {
+  // Tag Filtering - Multi
+  if (data.activeTagFilters && data.activeTagFilters.length > 0) {
+    if (data.activeTagFilters.includes(HIDE_ALL_VALUE)) {
       isFilteredOut = true;
-    } else if (!data.tags?.includes(data.activeTagFilter)) {
-      isFilteredOut = true;
+    } else {
+      // Show if ANY of the node's tags match any of the selected filters
+      const hasMatch = data.tags?.some(tagId => data.activeTagFilters!.includes(tagId));
+      if (!hasMatch) {
+        isFilteredOut = true;
+      }
     }
   }
   
@@ -76,12 +83,11 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   const handleClasses = `!w-4 !h-4 !bg-slate-400 !border-2 !border-white shadow-sm transition-all duration-200 hover:scale-125 hover:!bg-blue-500 z-50 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
 
-  // Resolve Tag UI components as side tabs that expand on hover OR when active filter
   const tagIndicators = (data.tags || []).map(tagId => {
     const tag = data.settings?.tags.find(t => t.id === tagId);
     if (!tag) return null;
 
-    const isActiveTag = data.activeTagFilter === tag.id;
+    const isActiveTag = data.activeTagFilters?.includes(tag.id);
     
     return (
       <div 
@@ -103,7 +109,6 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
     );
   });
 
-  // Handle truncation for tables
   const maxFields = appearance?.maxFieldsToShow ?? 6;
   const totalColumns = data.columns?.length || 0;
   const columnsToDisplay = isTable && totalColumns > maxFields 
@@ -113,12 +118,10 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
 
   return (
     <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
-      {/* Visual Tag Tabs */}
       <div className="absolute top-16 right-full flex flex-col items-end gap-1.5 pointer-events-none z-10">
         {tagIndicators}
       </div>
 
-      {/* Universal Handles */}
       <Handle type="target" position={Position.Top} id="t-t" className={handleClasses} />
       <Handle type="source" position={Position.Top} id="t-s" className={handleClasses} style={{ background: 'transparent', border: 'none' }} />
       <Handle type="target" position={Position.Bottom} id="b-t" className={handleClasses} />

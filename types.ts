@@ -81,11 +81,11 @@ export interface NodeData {
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
   appearance?: AppearanceSettings;
-  // Multi-filter states
-  activeTableFilter?: string | null;
-  activeLogicFilter?: string | null;
-  activeEdgeFilter?: string | null;
-  activeTagFilter?: string | null;
+  // Multi-filter states - now arrays for multiple selection
+  activeTableFilters?: string[];
+  activeLogicFilters?: string[];
+  activeEdgeFilters?: string[];
+  activeTagFilters?: string[];
 }
 
 export interface EdgeData {
@@ -95,11 +95,11 @@ export interface EdgeData {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   settings?: GlobalSettings;
-  // Multi-filter states
-  activeTableFilter?: string | null;
-  activeLogicFilter?: string | null;
-  activeEdgeFilter?: string | null;
-  activeTagFilter?: string | null;
+  // Multi-filter states - now arrays for multiple selection
+  activeTableFilters?: string[];
+  activeLogicFilters?: string[];
+  activeEdgeFilters?: string[];
+  activeTagFilters?: string[];
   sourceCategoryId?: string;
   targetCategoryId?: string;
   sourceTags?: string[];

@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag } from './types.ts';
@@ -214,7 +214,6 @@ function BlueprintStudio() {
         console.error("Failed to parse saved nodes", e);
       }
     }
-    // No saved project: Start Demo Mode
     return DEMO_NODES;
   });
 
@@ -228,7 +227,6 @@ function BlueprintStudio() {
         console.error("Failed to parse saved edges", e);
       }
     }
-    // No saved project: Load Demo Edges
     return DEMO_EDGES;
   });
 
@@ -242,7 +240,6 @@ function BlueprintStudio() {
         console.error("Failed to parse saved settings", e);
       }
     }
-    // No saved project: Use default settings
     return DEFAULT_SETTINGS;
   });
 
@@ -259,17 +256,16 @@ function BlueprintStudio() {
     return DEFAULT_APPEARANCE;
   });
 
-  // Determine if we are in Demo Mode based on localStorage
   useEffect(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
     setIsDemoMode(!saved);
   }, []);
 
-  // Filter States
-  const [activeTableFilter, setActiveTableFilter] = useState<string | null>(null);
-  const [activeLogicFilter, setActiveLogicFilter] = useState<string | null>(null);
-  const [activeEdgeFilter, setActiveEdgeFilter] = useState<string | null>(null);
-  const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
+  // Filter States - Now using arrays for multi-selection
+  const [activeTableFilters, setActiveTableFilters] = useState<string[]>([]);
+  const [activeLogicFilters, setActiveLogicFilters] = useState<string[]>([]);
+  const [activeEdgeFilters, setActiveEdgeFilters] = useState<string[]>([]);
+  const [activeTagFilters, setActiveTagFilters] = useState<string[]>([]);
   
   const [openFilterType, setOpenFilterType] = useState<'table' | 'logic' | 'edge' | 'tag' | 'add' | null>(null);
 
@@ -284,8 +280,6 @@ function BlueprintStudio() {
   }, [nodes.length, fitView]);
 
   useEffect(() => {
-    // We only persist if we're not in demo mode or once the user makes changes
-    // But for simplicity, we persist everything, and demo mode flag is just the initial absence of data.
     const projectData = { nodes, edges, settings };
     localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(projectData));
   }, [nodes, edges, settings]);
@@ -303,7 +297,7 @@ function BlueprintStudio() {
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds));
-    setIsDemoMode(false); // Any change breaks demo mode
+    setIsDemoMode(false);
   }, []);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
@@ -348,22 +342,21 @@ function BlueprintStudio() {
     if (window.confirm(t('reset_confirm'))) {
       setNodes([]);
       setEdges([]);
-      setActiveTableFilter(null);
-      setActiveLogicFilter(null);
-      setActiveEdgeFilter(null);
-      setActiveTagFilter(null);
+      setActiveTableFilters([]);
+      setActiveLogicFilters([]);
+      setActiveEdgeFilters([]);
+      setActiveTagFilters([]);
       hasPerformedInitialFit.current = false;
       setIsDemoMode(false);
-      // Force persistence to clear demo state permanently
       localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify({ nodes: [], edges: [], settings }));
     }
   }, [t, settings]);
 
   const handleResetFilters = useCallback(() => {
-    setActiveTableFilter(null);
-    setActiveLogicFilter(null);
-    setActiveEdgeFilter(null);
-    setActiveTagFilter(null);
+    setActiveTableFilters([]);
+    setActiveLogicFilters([]);
+    setActiveEdgeFilters([]);
+    setActiveTagFilters([]);
     setOpenFilterType(null);
   }, []);
 
@@ -414,7 +407,6 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.dataSources), "DataSources");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.fieldTypes), "FieldTypes");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(settings.tags || []), "Tags");
-    // Also export Appearance settings to ensure parameters like maxFieldsToShow are persisted
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([appearance]), "Appearance");
 
     const now = new Date();
@@ -441,7 +433,6 @@ function BlueprintStudio() {
       const fTypes = workbook.Sheets["FieldTypes"] ? XLSX.utils.sheet_to_json(workbook.Sheets["FieldTypes"]) as FieldType[] : settings.fieldTypes;
       const importedTags = workbook.Sheets["Tags"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Tags"]) as Tag[] : [];
       
-      // Import Appearance Settings
       const appSettingsRaw = workbook.Sheets["Appearance"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Appearance"])[0] as any : null;
       if (appSettingsRaw) {
         setAppearance({ ...DEFAULT_APPEARANCE, ...appSettingsRaw });
@@ -475,10 +466,10 @@ function BlueprintStudio() {
       setSettings({ tableCategories: tableCats, logicCategories: logicCats, connectionTypes: connTypes, dataSources, fieldTypes: fTypes, tags: importedTags });
       setNodes(importedNodes);
       setEdges(importedEdges);
-      setActiveTableFilter(null);
-      setActiveLogicFilter(null);
-      setActiveEdgeFilter(null);
-      setActiveTagFilter(null);
+      setActiveTableFilters([]);
+      setActiveLogicFilters([]);
+      setActiveEdgeFilters([]);
+      setActiveTagFilters([]);
       setIsDemoMode(false);
       
       setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 400 }), 50);
@@ -489,9 +480,9 @@ function BlueprintStudio() {
   const nodesWithActions = useMemo(() => nodes.map(n => ({
     ...n, data: { 
       ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
-      settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter
+      settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters
     }
-  })), [nodes, settings, appearance, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter]);
+  })), [nodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters]);
 
   const edgesWithActions = useMemo(() => edges.map(e => {
     const sourceNode = nodes.find(n => n.id === e.source);
@@ -499,35 +490,44 @@ function BlueprintStudio() {
     return {
       ...e, data: { 
         ...e.data, onEdit: setEditingEdge, onDelete: (id: string) => setEdges(eds => eds.filter(edge => edge.id !== id)), 
-        settings, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter,
+        settings, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters,
         sourceCategoryId: sourceNode?.data.categoryId, targetCategoryId: targetNode?.data.categoryId,
         sourceTags: sourceNode?.data.tags, targetTags: targetNode?.data.tags
       }
     };
-  }), [edges, settings, activeTableFilter, activeLogicFilter, activeEdgeFilter, activeTagFilter, nodes]);
+  }), [edges, settings, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, nodes]);
 
-  const getFilterName = (type: 'table' | 'logic' | 'edge' | 'tag') => {
-    if (type === 'table') {
-      if (!activeTableFilter) return t('all');
-      if (activeTableFilter === HIDE_ALL_VALUE) return t('hide_all');
-      return settings.tableCategories.find(c => c.id === activeTableFilter)?.name || t('all');
+  const getFilterDisplay = (type: 'table' | 'logic' | 'edge' | 'tag') => {
+    let current: string[] = [];
+    if (type === 'table') current = activeTableFilters;
+    else if (type === 'logic') current = activeLogicFilters;
+    else if (type === 'edge') current = activeEdgeFilters;
+    else if (type === 'tag') current = activeTagFilters;
+
+    if (current.length === 0) return t('all');
+    if (current.includes(HIDE_ALL_VALUE)) return t('hide_all');
+    
+    if (current.length === 1) {
+      if (type === 'table') return settings.tableCategories.find(c => c.id === current[0])?.name || t('all');
+      if (type === 'logic') return settings.logicCategories.find(c => c.id === current[0])?.name || t('all');
+      if (type === 'edge') return settings.connectionTypes.find(c => c.id === current[0])?.name || t('all');
+      if (type === 'tag') return settings.tags.find(c => c.id === current[0])?.name || t('all');
     }
-    if (type === 'logic') {
-      if (!activeLogicFilter) return t('all');
-      if (activeLogicFilter === HIDE_ALL_VALUE) return t('hide_all');
-      return settings.logicCategories.find(c => c.id === activeLogicFilter)?.name || t('all');
+
+    return `${current.length} selected`;
+  };
+
+  const toggleMultiFilter = (id: string, current: string[], setter: (val: string[]) => void) => {
+    if (id === HIDE_ALL_VALUE) {
+      setter(current.includes(HIDE_ALL_VALUE) ? [] : [HIDE_ALL_VALUE]);
+    } else {
+      const filtered = current.filter(x => x !== HIDE_ALL_VALUE);
+      if (filtered.includes(id)) {
+        setter(filtered.filter(x => x !== id));
+      } else {
+        setter([...filtered, id]);
+      }
     }
-    if (type === 'edge') {
-      if (!activeEdgeFilter) return t('all');
-      if (activeEdgeFilter === HIDE_ALL_VALUE) return t('hide_all');
-      return settings.connectionTypes.find(c => c.id === activeEdgeFilter)?.name || t('all');
-    }
-    if (type === 'tag') {
-      if (!activeTagFilter) return t('all');
-      if (activeTagFilter === HIDE_ALL_VALUE) return t('hide_all');
-      return settings.tags.find(tag => tag.id === activeTagFilter)?.name || t('all');
-    }
-    return t('all');
   };
 
   return (
@@ -580,7 +580,6 @@ function BlueprintStudio() {
       </aside>
 
       <main className="flex-1 min-h-0 relative">
-        {/* Demo Mode Indicator */}
         {isDemoMode && (
           <div className="absolute top-24 left-6 z-40 animate-in fade-in slide-in-from-left-4 duration-500">
             <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl shadow-xl shadow-amber-200/20">
@@ -589,39 +588,25 @@ function BlueprintStudio() {
                 <span className="text-sm font-black text-amber-800 uppercase tracking-widest leading-none mb-1">{t('demo_mode')}</span>
                 <span className="text-[11px] font-bold text-amber-600/80">{t('demo_reset_hint')}</span>
               </div>
-              <button 
-                onClick={() => setIsDemoMode(false)}
-                className="ml-4 p-1.5 hover:bg-amber-100 rounded-full text-amber-400 transition-colors"
-              >
+              <button onClick={() => setIsDemoMode(false)} className="ml-4 p-1.5 hover:bg-amber-100 rounded-full text-amber-400 transition-colors">
                 <X size={16} />
               </button>
             </div>
           </div>
         )}
 
-        {/* Canvas View Tools & Filters */}
         <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
-          {/* Add Node Dropdown */}
           <div className="relative">
-            <button 
-              onClick={() => setOpenFilterType(openFilterType === 'add' ? null : 'add')}
-              className={`w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openFilterType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}
-            >
+            <button onClick={() => setOpenFilterType(openFilterType === 'add' ? null : 'add')} className={`w-11 h-11 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 ${openFilterType === 'add' ? 'rotate-45 bg-slate-900' : ''}`}>
               <Plus size={24} />
             </button>
             {openFilterType === 'add' && (
               <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button 
-                  onClick={() => addNode(NodeCardType.TABLE)} 
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                >
+                <button onClick={() => addNode(NodeCardType.TABLE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                   <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Database size={16} /></div>
                   {t('data_table')}
                 </button>
-                <button 
-                  onClick={() => addNode(NodeCardType.LOGIC_NOTE)} 
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-                >
+                <button onClick={() => addNode(NodeCardType.LOGIC_NOTE)} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 transition-colors">
                   <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></div>
                   {t('logic_node')}
                 </button>
@@ -631,12 +616,7 @@ function BlueprintStudio() {
 
           <div className="h-6 w-px bg-slate-200 mx-1" />
 
-          {/* Reset Filters Button */}
-          <button 
-            onClick={handleResetFilters}
-            className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100"
-            title={t('reset_filters')}
-          >
+          <button onClick={handleResetFilters} className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group hover:border-red-100">
             <div className="p-1 bg-slate-100 rounded-full text-slate-500 group-hover:bg-red-500 group-hover:text-white transition-colors">
               <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
             </div>
@@ -648,33 +628,33 @@ function BlueprintStudio() {
 
           {/* Tag Filter */}
           <div className="relative">
-            <button 
-              onClick={() => setOpenFilterType(openFilterType === 'tag' ? null : 'tag')}
-              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTagFilter ? 'ring-2 ring-emerald-400 border-transparent' : ''}`}
-            >
+            <button onClick={() => setOpenFilterType(openFilterType === 'tag' ? null : 'tag')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTagFilters.length > 0 ? 'ring-2 ring-emerald-400 border-transparent' : ''}`}>
               <div className="p-1 bg-emerald-100 rounded-full text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                 <TagIcon size={14} />
               </div>
               <div className="flex flex-col items-start pr-1">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('tags')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('tag')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('tag')}</span>
               </div>
               <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'tag' ? 'rotate-180' : ''}`} />
             </button>
             {openFilterType === 'tag' && (
               <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => { setActiveTagFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeTagFilter ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
+                <button onClick={() => setActiveTagFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTagFilters.length === 0 ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
+                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
+                  {activeTagFilters.length === 0 && <Check size={14} />}
                 </button>
                 <div className="h-px bg-slate-50 my-1 mx-4" />
                 {settings.tags.map(tag => (
-                  <button key={tag.id} onClick={() => { setActiveTagFilter(tag.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTagFilter === tag.id ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />{tag.name}
+                  <button key={tag.id} onClick={() => toggleMultiFilter(tag.id, activeTagFilters, setActiveTagFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTagFilters.includes(tag.id) ? 'text-emerald-600 bg-emerald-50/50' : 'text-slate-600'}`}>
+                    <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tag.color }} />{tag.name}</div>
+                    {activeTagFilters.includes(tag.id) && <Check size={14} />}
                   </button>
                 ))}
                 <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => { setActiveTagFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTagFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <EyeOff size={14} />{t('hide_all')}
+                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeTagFilters, setActiveTagFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTagFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
+                  {activeTagFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
                 </button>
               </div>
             )}
@@ -682,33 +662,33 @@ function BlueprintStudio() {
 
           {/* Table Filter */}
           <div className="relative">
-            <button 
-              onClick={() => setOpenFilterType(openFilterType === 'table' ? null : 'table')}
-              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTableFilter ? 'ring-2 ring-blue-400 border-transparent' : ''}`}
-            >
+            <button onClick={() => setOpenFilterType(openFilterType === 'table' ? null : 'table')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeTableFilters.length > 0 ? 'ring-2 ring-blue-400 border-transparent' : ''}`}>
               <div className="p-1 bg-blue-100 rounded-full text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                 <Database size={14} />
               </div>
               <div className="flex flex-col items-start pr-1">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('data_table')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('table')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('table')}</span>
               </div>
               <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'table' ? 'rotate-180' : ''}`} />
             </button>
             {openFilterType === 'table' && (
               <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => { setActiveTableFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeTableFilter ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
+                <button onClick={() => setActiveTableFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTableFilters.length === 0 ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
+                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
+                  {activeTableFilters.length === 0 && <Check size={14} />}
                 </button>
                 <div className="h-px bg-slate-50 my-1 mx-4" />
                 {settings.tableCategories.map(cat => (
-                  <button key={cat.id} onClick={() => { setActiveTableFilter(cat.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTableFilter === cat.id ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}
+                  <button key={cat.id} onClick={() => toggleMultiFilter(cat.id, activeTableFilters, setActiveTableFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeTableFilters.includes(cat.id) ? 'text-blue-600 bg-blue-50/50' : 'text-slate-600'}`}>
+                    <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}</div>
+                    {activeTableFilters.includes(cat.id) && <Check size={14} />}
                   </button>
                 ))}
                 <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => { setActiveTableFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTableFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <EyeOff size={14} />{t('hide_all')}
+                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeTableFilters, setActiveTableFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeTableFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
+                  {activeTableFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
                 </button>
               </div>
             )}
@@ -716,33 +696,33 @@ function BlueprintStudio() {
 
           {/* Logic Filter */}
           <div className="relative">
-            <button 
-              onClick={() => setOpenFilterType(openFilterType === 'logic' ? null : 'logic')}
-              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeLogicFilter ? 'ring-2 ring-purple-400 border-transparent' : ''}`}
-            >
+            <button onClick={() => setOpenFilterType(openFilterType === 'logic' ? null : 'logic')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeLogicFilters.length > 0 ? 'ring-2 ring-purple-400 border-transparent' : ''}`}>
               <div className="p-1 bg-purple-100 rounded-full text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                 <FileText size={14} />
               </div>
               <div className="flex flex-col items-start pr-1">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('logic_node')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('logic')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('logic')}</span>
               </div>
               <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'logic' ? 'rotate-180' : ''}`} />
             </button>
             {openFilterType === 'logic' && (
               <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => { setActiveLogicFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeLogicFilter ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
+                <button onClick={() => setActiveLogicFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeLogicFilters.length === 0 ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
+                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
+                  {activeLogicFilters.length === 0 && <Check size={14} />}
                 </button>
                 <div className="h-px bg-slate-50 my-1 mx-4" />
                 {settings.logicCategories.map(cat => (
-                  <button key={cat.id} onClick={() => { setActiveLogicFilter(cat.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeLogicFilter === cat.id ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}
+                  <button key={cat.id} onClick={() => toggleMultiFilter(cat.id, activeLogicFilters, setActiveLogicFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeLogicFilters.includes(cat.id) ? 'text-purple-600 bg-purple-50/50' : 'text-slate-600'}`}>
+                    <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}</div>
+                    {activeLogicFilters.includes(cat.id) && <Check size={14} />}
                   </button>
                 ))}
                 <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => { setActiveLogicFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeLogicFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <EyeOff size={14} />{t('hide_all')}
+                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeLogicFilters, setActiveLogicFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeLogicFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
+                  {activeLogicFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
                 </button>
               </div>
             )}
@@ -750,33 +730,33 @@ function BlueprintStudio() {
 
           {/* Edge Filter */}
           <div className="relative">
-            <button 
-              onClick={() => setOpenFilterType(openFilterType === 'edge' ? null : 'edge')}
-              className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeEdgeFilter ? 'ring-2 ring-slate-400 border-transparent' : ''}`}
-            >
+            <button onClick={() => setOpenFilterType(openFilterType === 'edge' ? null : 'edge')} className={`flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group ${activeEdgeFilters.length > 0 ? 'ring-2 ring-slate-400 border-transparent' : ''}`}>
               <div className="p-1 bg-slate-100 rounded-full text-slate-600 group-hover:bg-slate-600 group-hover:text-white transition-colors">
                 <Link2 size={14} />
               </div>
               <div className="flex flex-col items-start pr-1">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('link_classification')}</span>
-                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterName('edge')}</span>
+                <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{getFilterDisplay('edge')}</span>
               </div>
               <ChevronDown size={14} className={`text-slate-400 transition-transform ${openFilterType === 'edge' ? 'rotate-180' : ''}`} />
             </button>
             {openFilterType === 'edge' && (
               <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
-                <button onClick={() => { setActiveEdgeFilter(null); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${!activeEdgeFilter ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}
+                <button onClick={() => setActiveEdgeFilters([])} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeEdgeFilters.length === 0 ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
+                  <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-slate-200" />{t('all')}</div>
+                  {activeEdgeFilters.length === 0 && <Check size={14} />}
                 </button>
                 <div className="h-px bg-slate-50 my-1 mx-4" />
                 {settings.connectionTypes.map(conn => (
-                  <button key={conn.id} onClick={() => { setActiveEdgeFilter(conn.id); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeEdgeFilter === conn.id ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
-                    <div className="w-3 h-px border-t border-slate-400" style={{ borderColor: conn.color, borderWidth: 2 }} />{conn.name}
+                  <button key={conn.id} onClick={() => toggleMultiFilter(conn.id, activeEdgeFilters, setActiveEdgeFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-slate-50 ${activeEdgeFilters.includes(conn.id) ? 'text-slate-900 bg-slate-50/50' : 'text-slate-600'}`}>
+                    <div className="flex items-center gap-3"><div className="w-3 h-px border-t border-slate-400" style={{ borderColor: conn.color, borderWidth: 2 }} />{conn.name}</div>
+                    {activeEdgeFilters.includes(conn.id) && <Check size={14} />}
                   </button>
                 ))}
                 <div className="h-px bg-slate-50 my-1 mx-4" />
-                <button onClick={() => { setActiveEdgeFilter(HIDE_ALL_VALUE); setOpenFilterType(null); }} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeEdgeFilter === HIDE_ALL_VALUE ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
-                  <EyeOff size={14} />{t('hide_all')}
+                <button onClick={() => toggleMultiFilter(HIDE_ALL_VALUE, activeEdgeFilters, setActiveEdgeFilters)} className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-red-50 hover:text-red-600 ${activeEdgeFilters.includes(HIDE_ALL_VALUE) ? 'text-red-600 bg-red-50/50' : 'text-slate-400'}`}>
+                  <div className="flex items-center gap-3"><EyeOff size={14} />{t('hide_all')}</div>
+                  {activeEdgeFilters.includes(HIDE_ALL_VALUE) && <Check size={14} />}
                 </button>
               </div>
             )}
