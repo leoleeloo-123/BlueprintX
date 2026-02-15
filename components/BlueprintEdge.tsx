@@ -20,53 +20,68 @@ export const BlueprintEdge = ({
   const dashArray = connType?.dashStyle === 'dashed' ? '5,5' : connType?.dashStyle === 'dotted' ? '2,2' : undefined;
 
   // Custom Label Positioning
-  // To ensure the label stays "on the line", we align it to the handle's exit/entry vector
+  // Logic: Instead of centering (translate -50%), we anchor the "near" end of the label to the line.
   let finalLabelX = labelX;
   let finalLabelY = labelY;
+  let labelTransform = 'translate(-50%, -50%)';
 
-  const OFFSET_DISTANCE = 50; // Distance from the node handle along the path leg
+  const GAP = 12; // Small gap between handle and label text start
 
   if (connType?.labelPosition === 'source') {
     if (sourcePosition === Position.Right) {
-      finalLabelX = sourceX + OFFSET_DISTANCE;
+      finalLabelX = sourceX + GAP;
       finalLabelY = sourceY;
+      labelTransform = 'translate(0, -50%)';
     } else if (sourcePosition === Position.Left) {
-      finalLabelX = sourceX - OFFSET_DISTANCE;
+      finalLabelX = sourceX - GAP;
       finalLabelY = sourceY;
+      labelTransform = 'translate(-100%, -50%)';
     } else if (sourcePosition === Position.Top) {
       finalLabelX = sourceX;
-      finalLabelY = sourceY - OFFSET_DISTANCE;
+      finalLabelY = sourceY - GAP;
+      labelTransform = 'translate(-50%, -100%)';
     } else if (sourcePosition === Position.Bottom) {
       finalLabelX = sourceX;
-      finalLabelY = sourceY + OFFSET_DISTANCE;
+      finalLabelY = sourceY + GAP;
+      labelTransform = 'translate(-50%, 0)';
     }
   } else if (connType?.labelPosition === 'target') {
     if (targetPosition === Position.Right) {
-      finalLabelX = targetX + OFFSET_DISTANCE;
+      finalLabelX = targetX + GAP;
       finalLabelY = targetY;
+      labelTransform = 'translate(0, -50%)';
     } else if (targetPosition === Position.Left) {
-      finalLabelX = targetX - OFFSET_DISTANCE;
+      finalLabelX = targetX - GAP;
       finalLabelY = targetY;
+      labelTransform = 'translate(-100%, -50%)';
     } else if (targetPosition === Position.Top) {
       finalLabelX = targetX;
-      finalLabelY = targetY - OFFSET_DISTANCE;
+      finalLabelY = targetY - GAP;
+      labelTransform = 'translate(-50%, -100%)';
     } else if (targetPosition === Position.Bottom) {
       finalLabelX = targetX;
-      finalLabelY = targetY + OFFSET_DISTANCE;
+      finalLabelY = targetY + GAP;
+      labelTransform = 'translate(-50%, 0)';
     }
+  } else {
+    // Default: Center
+    labelTransform = `translate(-50%, -50%) translate(${finalLabelX}px,${finalLabelY}px)`;
   }
+
+  // Update transform for positional cases
+  const finalTransform = connType?.labelPosition && connType.labelPosition !== 'center'
+    ? `translate(${finalLabelX}px,${finalLabelY}px) ${labelTransform}`
+    : labelTransform;
 
   // Filtering Logic for Edges
   let isFilteredOut = false;
   
-  // 1. Check specific edge filter
   if (data.activeEdgeFilter) {
     if (data.activeEdgeFilter === HIDE_ALL_VALUE || data.typeId !== data.activeEdgeFilter) {
       isFilteredOut = true;
     }
   }
   
-  // 2. Check if either source or target node is filtered by Table/Logic filters
   if (data.activeTableFilter) {
     if (data.activeTableFilter === HIDE_ALL_VALUE) {
        isFilteredOut = true;
@@ -83,12 +98,10 @@ export const BlueprintEdge = ({
     }
   }
 
-  // 3. Check Tag Filter
   if (data.activeTagFilter) {
     if (data.activeTagFilter === HIDE_ALL_VALUE) {
       isFilteredOut = true;
     } else {
-      // Show edge only if BOTH source and target have the selected tag
       const sourceHasTag = data.sourceTags?.includes(data.activeTagFilter);
       const targetHasTag = data.targetTags?.includes(data.activeTagFilter);
       if (!sourceHasTag || !targetHasTag) {
@@ -112,19 +125,20 @@ export const BlueprintEdge = ({
       <EdgeLabelRenderer>
         <div style={{ 
           position: 'absolute', 
-          transform: `translate(-50%, -50%) translate(${finalLabelX}px,${finalLabelY}px)`, 
+          transform: finalTransform,
           pointerEvents: 'all',
           opacity: edgeOpacity,
+          zIndex: 1000, // Ensure it's above other elements
           transition: 'opacity 0.3s'
         }} className="nodrag nopan">
           <div className="flex flex-col items-center gap-1">
             {label && (
-              <div className="bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-200 text-[9px] font-black text-slate-600 shadow-sm uppercase tracking-tighter whitespace-nowrap">
+              <div className="bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded border border-slate-200 text-[9px] font-black text-slate-600 shadow-sm uppercase tracking-tighter whitespace-nowrap">
                 {label}
               </div>
             )}
             {selected && !isFilteredOut && (
-              <div className="flex items-center gap-1 bg-white shadow-lg border border-slate-200 rounded-full p-1 animate-in zoom-in-75 duration-200">
+              <div className="flex items-center gap-1 bg-white shadow-lg border border-slate-200 rounded-full p-1 animate-in zoom-in-75 duration-200 mt-1">
                 <button className="p-1 hover:bg-blue-50 text-blue-600 rounded-full" onClick={(e) => { e.stopPropagation(); data.onEdit?.(id); }} title="Edit Edge"><Edit3 size={12} /></button>
                 <div className="w-px h-3 bg-slate-100" />
                 <button className="p-1 hover:bg-red-50 text-red-500 rounded-full" onClick={(e) => { e.stopPropagation(); data.onDelete?.(id); }} title="Delete Edge"><Trash2 size={12} /></button>
