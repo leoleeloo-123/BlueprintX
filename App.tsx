@@ -793,6 +793,8 @@ function BlueprintStudio() {
           edgeTypes={edgeTypes}
           fitView
           fitViewOptions={{ padding: CANVAS_PADDING }}
+          minZoom={0.05}
+          maxZoom={4}
           className="bg-transparent"
           defaultEdgeOptions={{ 
             type: 'blueprintEdge',
