@@ -374,15 +374,15 @@ function BlueprintStudio() {
     <div className="w-full h-full flex flex-row overflow-hidden bg-slate-50 relative" style={{ backgroundColor: appearance.canvasBgColor }}>
       <aside className="w-72 h-full bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="p-6 border-b border-slate-50 flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 relative overflow-hidden group">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-200 relative overflow-hidden group flex-shrink-0">
               <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               {/* Updated Logo to PackageOpen (Open White Box) */}
-              <PackageOpen size={24} strokeWidth={2.5} className="relative z-10" />
+              <PackageOpen size={30} strokeWidth={2.2} className="relative z-10" />
             </div>
-            <div>
-              <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none uppercase">WhiteBox</h1>
-              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-[0.2em] mt-1.5">{t('documentation')}</p>
+            <div className="overflow-hidden">
+              {/* Increased font size to 3xl to align with larger logo box height */}
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">WhiteBox</h1>
             </div>
           </div>
         </div>
