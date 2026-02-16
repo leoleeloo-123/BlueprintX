@@ -673,21 +673,21 @@ function BlueprintStudio() {
   return (
     <div className="w-full h-full bg-slate-50 relative overflow-hidden" style={{ backgroundColor: appearance.canvasBgColor }}>
       <main className="w-full h-full relative">
-        {/* Unified Responsive Top Toolbar */}
-        <div className="absolute inset-x-0 top-0 p-2 lg:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
+        {/* Unified Responsive Top Toolbar - Breakpoints refined for earlier compact mode trigger */}
+        <div className="absolute inset-x-0 top-0 p-2 lg:p-4 2xl:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
           {/* Action Group - Left */}
-          <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap min-w-0">
+          <div className="flex items-center gap-1.5 lg:gap-2 2xl:gap-3 pointer-events-auto flex-nowrap min-w-0">
             {/* Create Node */}
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} 
-                className={`flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 ${openMenuType === 'add' ? 'bg-slate-900' : ''}`}
+                className={`flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 ${openMenuType === 'add' ? 'bg-slate-900' : ''}`}
                 title={t('add_nodes')}
               >
                 <div className={`transition-transform duration-300 flex-shrink-0 ${openMenuType === 'add' ? 'rotate-45' : ''}`}>
                   <Plus size={22} strokeWidth={2.5} />
                 </div>
-                <div className="hidden xl:flex items-center pr-1">
+                <div className="hidden 2xl:flex items-center pr-1">
                   <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
                     {appearance.language === 'en' ? 'Add Nodes' : '新增节点'}
                   </span>
@@ -711,13 +711,13 @@ function BlueprintStudio() {
             <div className="relative flex-shrink-0">
               <button 
                 onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} 
-                className={`flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-emerald-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-emerald-500/30 ring-2 ring-transparent active:scale-95 ${openMenuType === 'io' ? 'bg-slate-900 border-slate-700' : ''}`}
+                className={`flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-emerald-700 transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-emerald-500/30 ring-2 ring-transparent active:scale-95 ${openMenuType === 'io' ? 'bg-slate-900 border-slate-700' : ''}`}
                 title={t('import_export')}
               >
                 <div className="flex-shrink-0">
                   <ArrowUpDown size={22} strokeWidth={2.5} className="group-hover:translate-y-[-2px] transition-transform duration-300" />
                 </div>
-                <div className="hidden xl:flex items-center pr-1">
+                <div className="hidden 2xl:flex items-center pr-1">
                   <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
                     {appearance.language === 'en' ? 'Import / Export' : '导入 / 导出'}
                   </span>
@@ -748,13 +748,13 @@ function BlueprintStudio() {
             {/* General Settings */}
             <button 
               onClick={() => setShowStudioSettings({ initialTab: 'general' })} 
-              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-slate-700 ring-2 ring-transparent active:scale-95"
+              className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-slate-700 ring-2 ring-transparent active:scale-95"
               title={t('general_settings')}
             >
               <div className="flex-shrink-0">
                 <Settings2 size={22} className="group-hover:rotate-90 transition-transform duration-500" />
               </div>
-              <div className="hidden xl:flex items-center pr-1">
+              <div className="hidden 2xl:flex items-center pr-1">
                 <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
                   {appearance.language === 'en' ? 'Setting' : '设置'}
                 </span>
@@ -764,13 +764,13 @@ function BlueprintStudio() {
             {/* Filters Group - Reset */}
             <button 
               onClick={handleResetFilters} 
-              className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto"
+              className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto"
               title={t('reset_filters')}
             >
               <div className="p-1.5 bg-rose-50 rounded-full text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-colors flex-shrink-0">
                 <RotateCcw size={16} strokeWidth={2.5} className="group-hover:rotate-[-45deg] transition-transform" />
               </div>
-              <div className="flex flex-col items-start pr-1 hidden xl:flex">
+              <div className="flex flex-col items-start pr-1 hidden 2xl:flex">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('filters_label')}</span>
                 <span className="text-xs font-bold text-slate-700 group-hover:text-rose-600 transition-colors">{t('reset_filters')}</span>
               </div>
@@ -781,7 +781,7 @@ function BlueprintStudio() {
               <div className="relative flex-shrink-0" key={type}>
                 <button 
                   onClick={() => setOpenMenuType(openMenuType === type ? null : type)} 
-                  className={`flex items-center justify-center gap-1.5 lg:gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto relative ${openMenuType === type ? 'ring-2 ring-slate-400/20' : ''}`}
+                  className={`flex items-center justify-center gap-1.5 lg:gap-2 px-2 2xl:px-4 py-1.5 lg:py-2 bg-white/90 backdrop-blur-md border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto relative ${openMenuType === type ? 'ring-2 ring-slate-400/20' : ''}`}
                   title={t(type === 'tag' ? 'tags' : type === 'table' ? 'data_table' : type === 'logic' ? 'logic_node' : 'link_classification')}
                 >
                   <div className={`p-1.5 rounded-full transition-colors flex-shrink-0 ${
@@ -795,16 +795,16 @@ function BlueprintStudio() {
                     {type === 'logic' && <FileText size={16} strokeWidth={2.5} />}
                     {type === 'edge' && <Link2 size={16} strokeWidth={2.5} />}
                   </div>
-                  <div className="flex flex-col items-start pr-1 hidden xl:flex">
+                  <div className="flex flex-col items-start pr-1 hidden 2xl:flex">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
                       {t(type === 'tag' ? 'tags' : type === 'table' ? 'data_table' : type === 'logic' ? 'logic_node' : 'link_classification')}
                     </span>
-                    <span className="text-xs font-bold text-slate-700 truncate max-w-[100px]">{getFilterDisplay(type)}</span>
+                    <span className="text-xs font-bold text-slate-700 truncate max-w-[80px]">{getFilterDisplay(type)}</span>
                   </div>
-                  <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === type ? 'rotate-180' : ''} hidden xl:block`} />
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ${openMenuType === type ? 'rotate-180' : ''} hidden 2xl:block`} />
                   
                   {getFilterCount(type) > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white xl:hidden shadow-sm border border-white z-20 leading-none">
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-slate-900 text-[9px] font-black text-white 2xl:hidden shadow-sm border border-white z-20 leading-none">
                       {getFilterCount(type)}
                     </span>
                   )}
@@ -852,17 +852,17 @@ function BlueprintStudio() {
           </div>
 
           {/* Right Controls - Fixed Position */}
-          <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap shrink-0">
+          <div className="flex items-center gap-1.5 lg:gap-2 2xl:gap-3 pointer-events-auto flex-nowrap shrink-0">
              {/* View Swap - Toggle */}
              <button 
               onClick={() => setViewType(viewType === 'canvas' ? 'catalog' : 'canvas')} 
-              className={`flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-indigo-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-indigo-500/30 ring-2 ring-transparent active:scale-95 ${viewType === 'catalog' ? 'bg-slate-900 border-slate-700' : ''}`}
+              className={`flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-indigo-700 transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-indigo-500/30 ring-2 ring-transparent active:scale-95 ${viewType === 'catalog' ? 'bg-slate-900 border-slate-700' : ''}`}
               title={t('view_swap')}
             >
               <div className="flex-shrink-0">
                 {viewType === 'canvas' ? <LayoutList size={22} strokeWidth={2.5} /> : <MapIcon size={22} strokeWidth={2.5} />}
               </div>
-              <div className="hidden xl:flex items-center pr-1">
+              <div className="hidden 2xl:flex items-center pr-1">
                 <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
                   {t('view_swap')}
                 </span>
@@ -873,13 +873,13 @@ function BlueprintStudio() {
             {viewType === 'canvas' && (
               <button 
                 onClick={handleAutoAlign} 
-                className="flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
+                className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
                 title={t('auto_align')}
               >
                 <div className="flex-shrink-0">
                   <Maximize size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
                 </div>
-                <div className="hidden xl:flex items-center pr-1">
+                <div className="hidden 2xl:flex items-center pr-1">
                   <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
                     {appearance.language === 'en' ? 'Auto-Align' : '自动对齐'}
                   </span>
@@ -985,7 +985,7 @@ function BlueprintStudio() {
                           />
                         </div>
                         {/* Catalog Overlay Actions */}
-                        <div className="absolute top-2 right-12 flex gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                        <div className="absolute top-2 right-20 flex gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
                           <button 
                             onClick={() => handleLocateOnCanvas(node.id)}
                             className="p-2 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-lg border border-slate-100 hover:bg-blue-600 hover:text-white transition-all transform active:scale-90"
