@@ -970,23 +970,23 @@ function BlueprintStudio() {
             </ReactFlow>
             
             {/* Watermark Logo with dynamic scaling and refined typography */}
-            <div className="absolute bottom-6 left-[72px] pointer-events-none select-none z-10 opacity-[0.12] flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] transition-opacity duration-500 animate-in fade-in slide-in-from-left-4">
+            <div className="absolute bottom-6 left-[72px] pointer-events-none select-none z-10 opacity-[0.12] flex items-center gap-[clamp(0.4rem,1.2vw,0.8rem)] transition-opacity duration-500 animate-in fade-in slide-in-from-left-4">
               <PackageOpen 
                 strokeWidth={1.5} 
                 className="text-slate-900 shrink-0" 
-                style={{ width: 'clamp(32px, 6vw, 64px)', height: 'clamp(32px, 6vw, 64px)' }}
+                style={{ width: 'clamp(26px, 4.8vw, 52px)', height: 'clamp(26px, 4.8vw, 52px)' }}
               />
               {/* Text container hidden on small (narrow) screens, flex on large ones */}
               <div className="hidden sm:flex flex-col">
                 <h1 
                   className="font-black text-slate-900 leading-none tracking-tight"
-                  style={{ fontSize: 'clamp(1.25rem, 3.5vw, 2.25rem)' }}
+                  style={{ fontSize: 'clamp(1rem, 2.8vw, 1.8rem)' }}
                 >
                   WhiteBox
                 </h1>
                 <p 
                   className="font-black text-slate-600 uppercase tracking-widest mt-1"
-                  style={{ fontSize: 'clamp(8px, 1.2vw, 10px)' }}
+                  style={{ fontSize: 'clamp(7px, 0.96vw, 8px)' }}
                 >
                   Documentation Studio
                 </p>
