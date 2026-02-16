@@ -1,3 +1,4 @@
+
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Trash2, Edit3, Database, FileText, BarChart2, MessageCircle, Key, Copy } from 'lucide-react';
@@ -69,6 +70,12 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   }
   
   const cardOpacityClass = isFilteredOut ? 'opacity-10 grayscale pointer-events-none' : 'opacity-100';
+
+  // Highlight (Locate) Glow logic
+  const isHighlighted = (data as any).highlightedNodeId === id;
+  const highlightGlowStyle = isHighlighted 
+    ? { boxShadow: `0 0 30px 10px ${headerColor}80`, transition: 'box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }
+    : { transition: 'box-shadow 0.8s ease' };
 
   const theme = {
     border: selected ? 'border-slate-900 ring-2 ring-slate-100' : 'border-slate-100',
@@ -153,7 +160,10 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
   const hasTruncatedFields = isTable && totalColumns > maxFields;
 
   return (
-    <div className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm transition-all duration-300 bg-white relative ${theme.border} ${cardOpacityClass}`}>
+    <div 
+      className={`group min-w-[220px] max-w-[320px] rounded-xl border shadow-sm bg-white relative ${theme.border} ${cardOpacityClass}`}
+      style={highlightGlowStyle}
+    >
       {/* Tag Containers */}
       <div className="absolute top-16 right-full flex flex-col items-end gap-1.5 pointer-events-none z-10">
         {tagsByPosition.left.map(id => renderTag(id, 'left'))}

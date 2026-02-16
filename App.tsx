@@ -205,6 +205,9 @@ function BlueprintStudio() {
   const [searchQuery, setSearchQuery] = useState('');
   const toolbarRef = useRef<HTMLDivElement>(null);
 
+  // New state to track if a node should be glowing (highlighted)
+  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
     if (saved) {
@@ -419,9 +422,14 @@ function BlueprintStudio() {
 
   const handleLocateOnCanvas = useCallback((nodeId: string) => {
     setViewType('canvas');
+    setHighlightedNodeId(nodeId);
     setTimeout(() => {
-      fitView({ nodes: [{ id: nodeId }], duration: 1000, padding: 0.5 });
-    }, 50);
+      fitView({ nodes: [{ id: nodeId }], duration: 1200, padding: 0.5 });
+    }, 100);
+    // Remove the highlight after a delay to create a transient glow effect
+    setTimeout(() => {
+      setHighlightedNodeId(null);
+    }, 4000);
   }, [fitView]);
 
   const handleResetCanvas = useCallback(() => {
@@ -628,9 +636,10 @@ function BlueprintStudio() {
       ...n.data, onEdit: setEditingNode, 
       onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
       onDuplicate: handleDuplicateNode,
-      settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters
+      settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters,
+      highlightedNodeId: highlightedNodeId // Pass the highlight ID down
     }
-  })), [filteredNodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, handleDuplicateNode]);
+  })), [filteredNodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, handleDuplicateNode, highlightedNodeId]);
 
   const edgesWithActions = useMemo(() => edges.map(e => {
     const sourceNode = nodes.find(n => n.id === e.source);
@@ -785,7 +794,7 @@ function BlueprintStudio() {
               </div>
             </button>
 
-            {/* Auto-Align - Moved to the right of Setting */}
+            {/* Align Tool */}
             <button 
               onClick={handleAutoAlign} 
               className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
