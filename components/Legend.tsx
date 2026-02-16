@@ -22,7 +22,7 @@ export const Legend: React.FC<LegendProps> = ({ settings, appearance, onUpdateAp
   };
 
   return (
-    <div className={`absolute bottom-6 left-6 z-10 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl p-4 shadow-xl shadow-slate-200/50 min-w-[200px] select-none pointer-events-auto transition-all duration-300`}>
+    <div className={`absolute bottom-6 right-6 z-10 bg-white/90 backdrop-blur-md border border-slate-200 rounded-2xl p-4 shadow-xl shadow-slate-200/50 min-w-[200px] select-none pointer-events-auto transition-all duration-300`}>
       <div className={`flex items-center justify-between gap-4 ${isExpanded ? 'mb-4 border-b border-slate-100 pb-2' : ''}`}>
         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
           {t('workspace_legend')}

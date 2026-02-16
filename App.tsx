@@ -947,8 +947,33 @@ function BlueprintStudio() {
               }}
             >
               <Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} />
-              <Controls position="bottom-right" />
+              <Controls position="bottom-left" />
             </ReactFlow>
+            
+            {/* Watermark Logo with dynamic scaling and refined typography */}
+            <div className="absolute bottom-6 left-[72px] pointer-events-none select-none z-10 opacity-[0.12] flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] transition-opacity duration-500 animate-in fade-in slide-in-from-left-4">
+              <PackageOpen 
+                strokeWidth={1.5} 
+                className="text-slate-900 shrink-0" 
+                style={{ width: 'clamp(32px, 6vw, 64px)', height: 'clamp(32px, 6vw, 64px)' }}
+              />
+              {/* Text container hidden on small (narrow) screens, flex on large ones */}
+              <div className="hidden sm:flex flex-col">
+                <h1 
+                  className="font-black text-slate-900 leading-none tracking-tight"
+                  style={{ fontSize: 'clamp(1.25rem, 3.5vw, 2.25rem)' }}
+                >
+                  WhiteBox
+                </h1>
+                <p 
+                  className="font-black text-slate-600 uppercase tracking-widest mt-1"
+                  style={{ fontSize: 'clamp(8px, 1.2vw, 10px)' }}
+                >
+                  Documentation Studio
+                </p>
+              </div>
+            </div>
+
             <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
           </>
         ) : (
