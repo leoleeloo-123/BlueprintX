@@ -1,8 +1,7 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-// Added PackageOpen to lucide-react imports
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { X, Camera, Image as ImageIcon, FileImage, Layers, Layout, Monitor, Maximize, Check, Download, Loader2, Info, PackageOpen, RotateCcw } from 'lucide-react';
-import { Node, Edge, getNodesBounds, getViewportForBounds, ReactFlowProvider, ReactFlow, Background, BackgroundVariant, useReactFlow, ReactFlowInstance } from 'reactflow';
+import { Node, Edge, ReactFlowProvider, ReactFlow, Background, BackgroundVariant, useReactFlow, ReactFlowInstance } from 'reactflow';
 import { toPng, toJpeg } from 'html-to-image';
 import { GlobalSettings, AppearanceSettings, NodeData, NodeCardType } from '../types.ts';
 import { translations } from '../translations.ts';
@@ -14,11 +13,17 @@ interface ExportImageModalProps {
   edges: Edge[];
   settings: GlobalSettings;
   appearance: AppearanceSettings;
+  activeTableFilters: string[];
+  activeLogicFilters: string[];
+  activeEdgeFilters: string[];
+  activeTagFilters: string[];
+  searchQuery: string;
   onClose: () => void;
 }
 
 const nodeTypes = { blueprintNode: BlueprintCard };
 const edgeTypes = { blueprintEdge: BlueprintEdge };
+const HIDE_ALL_VALUE = '__HIDE_ALL__';
 
 // Internal component to access useReactFlow hook for the export-specific instance
 const ExportFlowInternal = ({ nodes, edges, onInit }: { nodes: Node[], edges: Edge[], onInit: (instance: ReactFlowInstance) => void }) => {
@@ -43,13 +48,16 @@ const ExportFlowInternal = ({ nodes, edges, onInit }: { nodes: Node[], edges: Ed
   );
 };
 
-export const ExportImageModal: React.FC<ExportImageModalProps> = ({ nodes, edges, settings, appearance, onClose }) => {
+export const ExportImageModal: React.FC<ExportImageModalProps> = ({ 
+  nodes, edges, settings, appearance, 
+  activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, searchQuery,
+  onClose 
+}) => {
   const [size, setSize] = useState<'A4' | 'Letter' | '16:9' | '4:3' | 'Auto'>('16:9');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('landscape');
   const [format, setFormat] = useState<'png' | 'jpg'>('png');
   const [scope, setScope] = useState<'visible' | 'all'>('visible');
   const [legendMode, setLegendMode] = useState<'none' | 'collapsed' | 'expanded'>('expanded');
-  const [margin, setMargin] = useState(50);
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
@@ -58,21 +66,80 @@ export const ExportImageModal: React.FC<ExportImageModalProps> = ({ nodes, edges
 
   const t = (key: keyof typeof translations.en) => translations[appearance.language][key] || key;
 
-  // Filter nodes based on scope
-  // In a real app, 'visible' would check viewport bounds, 
-  // but for simplicity here we assume 'visible' means currently filtered nodes.
-  const filteredNodes = scope === 'visible' 
-    ? nodes.filter(n => {
-        // This is a simplified check. In the main app, nodes are filtered via complex logic.
-        // For the export modal, we rely on the passed 'nodes' which should already be filtered if we are in 'visible' scope
-        // or we use the original set if we want everything.
-        return true; 
-      })
-    : nodes;
+  // Filtering Logic (replicated from App.tsx for consistent results)
+  const isNodeVisible = useCallback((node: Node<NodeData>) => {
+    const { data } = node;
+    const isTable = data.cardType === NodeCardType.TABLE;
+    const isLogic = data.cardType === NodeCardType.LOGIC_NOTE;
 
-  const filteredEdges = edges.filter(e => {
-    return filteredNodes.some(n => n.id === e.source) && filteredNodes.some(n => n.id === e.target);
-  });
+    // 1. Category Filters
+    if (isTable && activeTableFilters.length > 0) {
+      if (activeTableFilters.includes(HIDE_ALL_VALUE)) return false;
+      if (data.categoryId && !activeTableFilters.includes(data.categoryId)) return false;
+    }
+    if (isLogic && activeLogicFilters.length > 0) {
+      if (activeLogicFilters.includes(HIDE_ALL_VALUE)) return false;
+      if (data.categoryId && !activeLogicFilters.includes(data.categoryId)) return false;
+    }
+
+    // 2. Tag Filters
+    if (activeTagFilters.length > 0) {
+      if (activeTagFilters.includes(HIDE_ALL_VALUE)) return false;
+      const hasMatch = data.tags?.some(tagId => activeTagFilters.includes(tagId));
+      if (!hasMatch) return false;
+    }
+
+    // 3. Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchesLabel = data.label.toLowerCase().includes(q);
+      const matchesDesc = data.description?.toLowerCase().includes(q);
+      const matchesFields = data.columns?.some(c => c.name.toLowerCase().includes(q));
+      const matchesComment = data.comment?.toLowerCase().includes(q);
+      const matchesTags = data.tags?.some(tid => {
+        const tObj = settings.tags.find(tag => tag.id === tid);
+        return tObj?.name.toLowerCase().includes(q);
+      });
+
+      if (!matchesLabel && !matchesDesc && !matchesFields && !matchesComment && !matchesTags) return false;
+    }
+
+    return true;
+  }, [activeTableFilters, activeLogicFilters, activeTagFilters, searchQuery, settings.tags]);
+
+  // Nodes with full data enrichment (crucial for card colors and correct rendering)
+  const enrichedNodes = useMemo(() => {
+    const sourceNodes = scope === 'visible' ? nodes.filter(isNodeVisible) : nodes;
+    
+    return sourceNodes.map(n => ({
+      ...n,
+      data: {
+        ...n.data,
+        settings,
+        appearance,
+        activeTableFilters: scope === 'visible' ? activeTableFilters : [],
+        activeLogicFilters: scope === 'visible' ? activeLogicFilters : [],
+        activeEdgeFilters: scope === 'visible' ? activeEdgeFilters : [],
+        activeTagFilters: scope === 'visible' ? activeTagFilters : []
+      }
+    }));
+  }, [nodes, isNodeVisible, scope, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters]);
+
+  const enrichedEdges = useMemo(() => {
+    return edges.filter(e => {
+      return enrichedNodes.some(n => n.id === e.source) && enrichedNodes.some(n => n.id === e.target);
+    }).map(e => ({
+      ...e,
+      data: {
+        ...e.data,
+        settings,
+        activeTableFilters: scope === 'visible' ? activeTableFilters : [],
+        activeLogicFilters: scope === 'visible' ? activeLogicFilters : [],
+        activeEdgeFilters: scope === 'visible' ? activeEdgeFilters : [],
+        activeTagFilters: scope === 'visible' ? activeTagFilters : []
+      }
+    }));
+  }, [edges, enrichedNodes, settings, scope, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters]);
 
   const getExportSize = () => {
     if (size === 'A4') {
@@ -123,7 +190,7 @@ export const ExportImageModal: React.FC<ExportImageModalProps> = ({ nodes, edges
   useEffect(() => {
     const timer = setTimeout(generatePreview, 500);
     return () => clearTimeout(timer);
-  }, [size, orientation, scope, legendMode, margin, format]);
+  }, [size, orientation, scope, legendMode, enrichedNodes, enrichedEdges, format]);
 
   const handleDownload = async () => {
     if (!exportRef.current) return;
@@ -132,7 +199,7 @@ export const ExportImageModal: React.FC<ExportImageModalProps> = ({ nodes, edges
       // Ensure it is aligned before final export
       if (rfInstance.current) {
         rfInstance.current.fitView({ padding: 0.2 });
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       const options = {
@@ -318,8 +385,8 @@ export const ExportImageModal: React.FC<ExportImageModalProps> = ({ nodes, edges
                   }}>
                     <ReactFlowProvider>
                       <ExportFlowInternal 
-                        nodes={filteredNodes} 
-                        edges={filteredEdges} 
+                        nodes={enrichedNodes} 
+                        edges={enrichedEdges} 
                         onInit={(instance) => { rfInstance.current = instance; }}
                       />
                     </ReactFlowProvider>

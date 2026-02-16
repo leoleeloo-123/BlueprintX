@@ -1106,6 +1106,11 @@ function BlueprintStudio() {
           edges={edges}
           settings={settings}
           appearance={appearance}
+          activeTableFilters={activeTableFilters}
+          activeLogicFilters={activeLogicFilters}
+          activeEdgeFilters={activeEdgeFilters}
+          activeTagFilters={activeTagFilters}
+          searchQuery={searchQuery}
           onClose={() => setShowExportModal(false)}
         />
       )}
