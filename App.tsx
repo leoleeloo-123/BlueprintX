@@ -668,88 +668,7 @@ function BlueprintStudio() {
     setShowStudioSettings(null);
   };
 
-  const CatalogView = () => {
-    const categories = [...settings.tableCategories, ...settings.logicCategories];
-    
-    return (
-      <div className="w-full h-full overflow-y-auto px-6 py-32 lg:px-12 animate-in fade-in duration-500 custom-scrollbar" style={{ backgroundColor: appearance.canvasBgColor }}>
-        {/* Search Bar in Catalog */}
-        <div className="max-w-4xl mx-auto mb-12">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
-              <Search size={22} strokeWidth={2.5} />
-            </div>
-            <input 
-              type="text" 
-              placeholder={t('search_placeholder')} 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-16 pl-16 pr-8 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full shadow-lg shadow-slate-200/50 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder-slate-300" 
-            />
-          </div>
-        </div>
-
-        {categories.map((cat) => {
-          const catNodes = filteredNodes.filter(n => n.data.categoryId === cat.id);
-          if (catNodes.length === 0) return null;
-
-          return (
-            <section key={cat.id} className="max-w-7xl mx-auto mb-16 animate-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center gap-4 mb-6 py-4">
-                <div className="w-4 h-4 rounded-sm shadow-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
-                <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex-1">{cat.name}</h2>
-                <div className="px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-sm">
-                  {catNodes.length} Nodes
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {catNodes.map(node => (
-                  <div key={node.id} className="relative group">
-                    <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50">
-                      <BlueprintCard 
-                        id={node.id} 
-                        data={{
-                          ...node.data, 
-                          settings, 
-                          appearance,
-                          onEdit: setEditingNode,
-                          onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id))
-                        }} 
-                        type="blueprintNode"
-                        dragging={false}
-                        zIndex={1}
-                        isConnectable={false}
-                        xPos={0}
-                        yPos={0}
-                        selected={false}
-                      />
-                    </div>
-                    {/* Catalog Overlay Actions */}
-                    <div className="absolute top-2 right-12 flex gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
-                       <button 
-                        onClick={() => handleLocateOnCanvas(node.id)}
-                        className="p-2 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-lg border border-slate-100 hover:bg-blue-600 hover:text-white transition-all transform active:scale-90"
-                        title={t('locate_on_canvas')}
-                       >
-                        <Crosshair size={14} strokeWidth={2.5} />
-                       </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          );
-        })}
-
-        {filteredNodes.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-32 text-slate-300">
-            <Search size={64} className="mb-4 opacity-20" />
-            <p className="text-xl font-bold">{t('no_results')}</p>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const allCategories = useMemo(() => [...settings.tableCategories, ...settings.logicCategories], [settings.tableCategories, settings.logicCategories]);
 
   return (
     <div className="w-full h-full bg-slate-50 relative overflow-hidden" style={{ backgroundColor: appearance.canvasBgColor }}>
@@ -934,7 +853,7 @@ function BlueprintStudio() {
 
           {/* Right Controls - Fixed Position */}
           <div className="flex items-center gap-1.5 lg:gap-3 pointer-events-auto flex-nowrap shrink-0">
-             {/* View Swap - Important Toggle */}
+             {/* View Swap - Toggle */}
              <button 
               onClick={() => setViewType(viewType === 'canvas' ? 'catalog' : 'canvas')} 
               className={`flex items-center justify-center gap-3 px-2 xl:px-4 py-1.5 lg:py-2 bg-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-indigo-700 transition-all group h-10 lg:h-12 xl:w-auto aspect-square xl:aspect-auto flex-shrink-0 border border-indigo-500/30 ring-2 ring-transparent active:scale-95 ${viewType === 'catalog' ? 'bg-slate-900 border-slate-700' : ''}`}
@@ -1013,7 +932,82 @@ function BlueprintStudio() {
             <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
           </>
         ) : (
-          <CatalogView />
+          <div className="w-full h-full overflow-y-auto px-6 py-32 lg:px-12 animate-in fade-in duration-500 custom-scrollbar" style={{ backgroundColor: appearance.canvasBgColor }}>
+            {/* Search Bar in Catalog - Defined directly here to prevent focus loss glitches */}
+            <div className="max-w-4xl mx-auto mb-12">
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                  <Search size={22} strokeWidth={2.5} />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder={t('search_placeholder')} 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-16 pl-16 pr-8 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full shadow-lg shadow-slate-200/50 text-lg font-bold text-slate-800 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder-slate-300" 
+                />
+              </div>
+            </div>
+
+            {allCategories.map((cat) => {
+              const catNodes = filteredNodes.filter(n => n.data.categoryId === cat.id);
+              if (catNodes.length === 0) return null;
+
+              return (
+                <section key={cat.id} className="max-w-7xl mx-auto mb-16 animate-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center gap-4 mb-6 py-4">
+                    <div className="w-4 h-4 rounded-sm shadow-sm flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                    <h2 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex-1">{cat.name}</h2>
+                    <div className="px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-sm">
+                      {catNodes.length} Nodes
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {catNodes.map(node => (
+                      <div key={node.id} className="relative group">
+                        <div className="transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50">
+                          <BlueprintCard 
+                            id={node.id} 
+                            data={{
+                              ...node.data, 
+                              settings, 
+                              appearance,
+                              onEdit: setEditingNode,
+                              onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id))
+                            }} 
+                            type="blueprintNode"
+                            dragging={false}
+                            zIndex={1}
+                            isConnectable={false}
+                            xPos={0}
+                            yPos={0}
+                            selected={false}
+                          />
+                        </div>
+                        {/* Catalog Overlay Actions */}
+                        <div className="absolute top-2 right-12 flex gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                          <button 
+                            onClick={() => handleLocateOnCanvas(node.id)}
+                            className="p-2 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-lg border border-slate-100 hover:bg-blue-600 hover:text-white transition-all transform active:scale-90"
+                            title={t('locate_on_canvas')}
+                          >
+                            <Crosshair size={14} strokeWidth={2.5} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+
+            {filteredNodes.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-32 text-slate-300">
+                <Search size={64} className="mb-4 opacity-20" />
+                <p className="text-xl font-bold">{t('no_results')}</p>
+              </div>
+            )}
+          </div>
         )}
       </main>
 
