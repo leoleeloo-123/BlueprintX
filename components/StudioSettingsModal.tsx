@@ -186,6 +186,24 @@ export const StudioSettingsModal: React.FC<StudioSettingsModalProps> = ({
 
                 <section className="pt-8 border-t border-slate-100">
                   <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('manage_data_sources')}</h3>
+                    <button onClick={addDataSource} className="text-[10px] font-black text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1.5 uppercase transition-all">
+                      <Plus size={14} strokeWidth={3} /> {t('add_field')}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {localSettings.dataSources.map((src, idx) => (
+                      <div key={src.id} className="flex items-center gap-3 p-3 bg-slate-50/50 border border-slate-200 rounded-xl group hover:bg-white transition-all">
+                        <div className="p-1.5 bg-slate-100 rounded-lg text-slate-400"><Database size={14} /></div>
+                        <input type="text" value={src.name} onChange={e => { const updated = [...localSettings.dataSources]; updated[idx].name = e.target.value; setLocalSettings({ ...localSettings, dataSources: updated }); }} className="flex-1 bg-transparent text-xs font-bold text-slate-600 border-0 p-0 focus:ring-0" />
+                        <button onClick={() => setLocalSettings(p => ({ ...p, dataSources: p.dataSources.filter(s => s.id !== src.id)}))} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="pt-8 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('manage_field_types')}</h3>
                     <button onClick={addFieldType} className="text-[10px] font-black text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1.5 uppercase transition-all">
                       <Plus size={14} strokeWidth={3} /> {t('add_field')}
