@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown, Maximize, Search, LayoutList, Map as MapIcon, Crosshair, Copy } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown, Maximize, Search, LayoutList, Map as MapIcon, Crosshair, Copy, Camera } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag, ViewType } from './types.ts';
@@ -27,6 +27,7 @@ import { EditorModal } from './components/EditorModal.tsx';
 import { EdgeEditorModal } from './components/EdgeEditorModal.tsx';
 import { StudioSettingsModal } from './components/StudioSettingsModal.tsx';
 import { Legend } from './components/Legend.tsx';
+import { ExportImageModal } from './components/ExportImageModal.tsx';
 
 const nodeTypes = { blueprintNode: BlueprintCard };
 const edgeTypes = { blueprintEdge: BlueprintEdge };
@@ -207,6 +208,9 @@ function BlueprintStudio() {
 
   // New state to track if a node should be glowing (highlighted)
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+  
+  // New state for Export Image Modal
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const [nodes, setNodes] = useState<Node<NodeData>[]>(() => {
     const saved = localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -705,7 +709,7 @@ function BlueprintStudio() {
 
   return (
     <div className="w-full h-full bg-slate-50 relative overflow-hidden" style={{ backgroundColor: appearance.canvasBgColor }}>
-      <main className="w-full h-full relative">
+      <main className="w-full h-full relative" id="studio-main-viewport">
         {/* Unified Responsive Top Toolbar - Breakpoints refined for earlier compact mode trigger */}
         <div className="absolute inset-x-0 top-0 p-2 lg:p-4 2xl:p-6 flex items-center justify-between pointer-events-none z-30 transition-all duration-300" ref={toolbarRef}>
           {/* Action Group - Left */}
@@ -757,7 +761,7 @@ function BlueprintStudio() {
                 </div>
               </button>
               {openMenuType === 'io' && (
-                <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <div className="absolute top-full left-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
                   <button onClick={exportToExcel} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
                     <Download size={16} className="text-blue-600" />
                     <span className="text-left">{t('export_project')}</span>
@@ -767,6 +771,10 @@ function BlueprintStudio() {
                     <span className="text-left">{t('import_xlsx')}</span>
                     <input type="file" className="hidden" accept=".xlsx, .xls" onChange={importFromExcel} />
                   </label>
+                  <button onClick={() => { setOpenMenuType(null); setShowExportModal(true); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                    <Camera size={16} className="text-indigo-600" />
+                    <span className="text-left">{t('export_image')}</span>
+                  </button>
                   <div className="h-px bg-slate-50 my-1 mx-4" />
                   <button onClick={handleResetCanvas} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors text-left">
                     <Trash2 size={16} />
@@ -1089,6 +1097,16 @@ function BlueprintStudio() {
           initialTab={showStudioSettings.initialTab}
           onClose={() => setShowStudioSettings(null)} 
           onSave={handleSaveStudioSettings} 
+        />
+      )}
+      
+      {showExportModal && (
+        <ExportImageModal
+          nodes={nodes}
+          edges={edges}
+          settings={settings}
+          appearance={appearance}
+          onClose={() => setShowExportModal(false)}
         />
       )}
     </div>

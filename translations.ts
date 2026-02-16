@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     all: "All Categories",
@@ -96,7 +97,26 @@ export const translations = {
     search_placeholder: "Search nodes by name, field, or tag...",
     search_label: "Search",
     no_results: "No nodes found matching your search.",
-    duplicate: "Duplicate"
+    duplicate: "Duplicate",
+    export_image: "Screenshot / Export Image",
+    export_settings: "Export Settings",
+    output_size: "Output Size",
+    orientation: "Orientation",
+    format: "Image Format",
+    export_scope: "Export Scope",
+    legend_visibility: "Legend Visibility",
+    margin: "Margin / Padding",
+    preview: "Preview",
+    portrait: "Portrait",
+    landscape: "Landscape",
+    current_view: "Current View (Filtered)",
+    full_canvas: "Full Canvas (All Nodes)",
+    collapsed: "Collapsed",
+    expanded: "Expanded",
+    auto_fit: "Auto-Fit",
+    generate_image: "Generate Image",
+    download_ready: "Download Ready",
+    download: "Download"
   },
   zh: {
     all: "显示全部",
@@ -195,6 +215,25 @@ export const translations = {
     search_placeholder: "搜索节点名称、字段或标签...",
     search_label: "搜索",
     no_results: "没有找到匹配的节点。",
-    duplicate: "复制"
+    duplicate: "复制",
+    export_image: "截图 / 导出图片",
+    export_settings: "导出设置",
+    output_size: "输出尺寸",
+    orientation: "方向",
+    format: "图片格式",
+    export_scope: "导出范围",
+    legend_visibility: "图例显示",
+    margin: "页边距 / 内边距",
+    preview: "预览",
+    portrait: "纵向",
+    landscape: "横向",
+    current_view: "当前视图 (已过滤)",
+    full_canvas: "完整画布 (所有节点)",
+    collapsed: "折叠",
+    expanded: "展开",
+    auto_fit: "自动适应",
+    generate_image: "生成图片",
+    download_ready: "图片已准备就绪",
+    download: "下载"
   }
 };
