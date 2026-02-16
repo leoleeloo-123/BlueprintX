@@ -410,8 +410,12 @@ function BlueprintStudio() {
   };
 
   const handleAutoAlign = useCallback(() => {
-    fitView({ padding: CANVAS_PADDING, duration: 800 });
-  }, [fitView]);
+    // If not on canvas, switch to canvas first to make fitView work
+    if (viewType !== 'canvas') setViewType('canvas');
+    setTimeout(() => {
+      fitView({ padding: CANVAS_PADDING, duration: 800 });
+    }, 50);
+  }, [fitView, viewType]);
 
   const handleLocateOnCanvas = useCallback((nodeId: string) => {
     setViewType('canvas');
@@ -781,6 +785,22 @@ function BlueprintStudio() {
               </div>
             </button>
 
+            {/* Auto-Align - Moved to the right of Setting */}
+            <button 
+              onClick={handleAutoAlign} 
+              className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
+              title={t('auto_align')}
+            >
+              <div className="flex-shrink-0">
+                <Maximize size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+              </div>
+              <div className="hidden 2xl:flex items-center pr-1">
+                <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
+                  {appearance.language === 'en' ? 'Auto-Align' : '自动对齐'}
+                </span>
+              </div>
+            </button>
+
             {/* Filters Group - Reset */}
             <button 
               onClick={handleResetFilters} 
@@ -888,24 +908,6 @@ function BlueprintStudio() {
                 </span>
               </div>
             </button>
-
-            {/* Auto-Align - Only in Canvas */}
-            {viewType === 'canvas' && (
-              <button 
-                onClick={handleAutoAlign} 
-                className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-blue-500/30 ring-2 ring-transparent active:scale-95"
-                title={t('auto_align')}
-              >
-                <div className="flex-shrink-0">
-                  <Maximize size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-                </div>
-                <div className="hidden 2xl:flex items-center pr-1">
-                  <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
-                    {appearance.language === 'en' ? 'Auto-Align' : '自动对齐'}
-                  </span>
-                </div>
-              </button>
-            )}
           </div>
         </div>
 
