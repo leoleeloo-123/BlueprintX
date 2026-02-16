@@ -796,7 +796,7 @@ function BlueprintStudio() {
               </div>
               <div className="hidden 2xl:flex items-center pr-1">
                 <span className="text-lg font-black text-white transition-colors leading-none tracking-tight">
-                  {appearance.language === 'en' ? 'Auto-Align' : '自动对齐'}
+                  {t('auto_align')}
                 </span>
               </div>
             </button>
