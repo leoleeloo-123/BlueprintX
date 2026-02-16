@@ -95,7 +95,8 @@ export const translations = {
     locate_on_canvas: "Locate on Canvas",
     search_placeholder: "Search nodes by name, field, or tag...",
     search_label: "Search",
-    no_results: "No nodes found matching your search."
+    no_results: "No nodes found matching your search.",
+    duplicate: "Duplicate"
   },
   zh: {
     all: "显示全部",
@@ -193,6 +194,7 @@ export const translations = {
     locate_on_canvas: "在画布中定位",
     search_placeholder: "搜索节点名称、字段或标签...",
     search_label: "搜索",
-    no_results: "没有找到匹配的节点。"
+    no_results: "没有找到匹配的节点。",
+    duplicate: "复制"
   }
 };

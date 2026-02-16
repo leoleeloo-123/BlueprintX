@@ -1,7 +1,6 @@
-
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Trash2, Edit3, Database, FileText, BarChart2, MessageCircle, Key } from 'lucide-react';
+import { Trash2, Edit3, Database, FileText, BarChart2, MessageCircle, Key, Copy } from 'lucide-react';
 import { NodeData, NodeCardType, GlobalSettings, TagPosition } from '../types.ts';
 import { translations } from '../translations.ts';
 
@@ -184,7 +183,8 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
           <h3 className={`font-bold truncate uppercase tracking-widest ${headerFontSizeClass}`}>{data.label}</h3>
         </div>
         {!isFilteredOut && (
-          <div className="flex items-center gap-1.5 ml-2">
+          <div className="flex items-center gap-1 ml-2">
+            <button onClick={() => data.onDuplicate?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors" title={t('duplicate')}><Copy size={12} /></button>
             <button onClick={() => data.onEdit?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Edit3 size={12} /></button>
             <button onClick={() => data.onDelete?.(id)} className="p-1 hover:bg-white/20 rounded transition-colors"><Trash2 size={12} /></button>
           </div>
@@ -222,7 +222,7 @@ export const BlueprintCard = memo(({ data, id, selected }: NodeProps<NodeData & 
                         <div className="w-1 h-1 rounded-full" style={{ backgroundColor: headerColor }} />
                       )}
                     </div>
-                    <span className={`text-slate-600 font-bold uppercase tracking-tight flex-1 truncate ${contentFontSizeClass} ${col.isKey ? 'text-slate-900' : ''}`}>
+                    <span className={`text-slate-600 font-bold tracking-tight flex-1 truncate ${contentFontSizeClass} ${col.isKey ? 'text-slate-900' : ''}`}>
                       {col.name}
                     </span>
                     {fType && (

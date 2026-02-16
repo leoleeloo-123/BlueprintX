@@ -16,7 +16,7 @@ import ReactFlow, {
   MarkerType,
   useReactFlow
 } from 'reactflow';
-import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown, Maximize, Search, LayoutList, Map as MapIcon, Crosshair } from 'lucide-react';
+import { Download, Upload, Plus, Layers, Settings2, X, Globe, Sliders, Trash2, Filter, ChevronDown, Link2, FileText, Database, EyeOff, Tag as TagIcon, PackageOpen, RotateCcw, Info, Check, ArrowUpDown, Maximize, Search, LayoutList, Map as MapIcon, Crosshair, Copy } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 import { NodeCardType, NodeData, GlobalSettings, TableCategory, ConnectionType, LogicCategory, AppearanceSettings, DataSource, FieldType, Tag, ViewType } from './types.ts';
@@ -379,6 +379,24 @@ function BlueprintStudio() {
     setIsDemoMode(false);
   };
 
+  const handleDuplicateNode = useCallback((id: string) => {
+    setNodes((nds) => {
+      const nodeToCopy = nds.find((n) => n.id === id);
+      if (!nodeToCopy) return nds;
+      const newNode = {
+        ...nodeToCopy,
+        id: `dup-${Date.now()}`,
+        position: { x: nodeToCopy.position.x + 40, y: nodeToCopy.position.y + 40 },
+        data: {
+          ...nodeToCopy.data,
+          label: `${nodeToCopy.data.label}_Copy`,
+        },
+      };
+      return [...nds, newNode];
+    });
+    setIsDemoMode(false);
+  }, []);
+
   const handleSaveEdge = (id: string, data: { typeId: string; label: string; hasArrow: boolean }) => {
     const connType = settings.connectionTypes.find(t => t.id === data.typeId);
     setEdges((eds) => eds.map((edge) => edge.id === id ? { 
@@ -603,10 +621,12 @@ function BlueprintStudio() {
 
   const nodesWithActions = useMemo(() => filteredNodes.map(n => ({
     ...n, data: { 
-      ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
+      ...n.data, onEdit: setEditingNode, 
+      onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), 
+      onDuplicate: handleDuplicateNode,
       settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters
     }
-  })), [filteredNodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters]);
+  })), [filteredNodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, handleDuplicateNode]);
 
   const edgesWithActions = useMemo(() => edges.map(e => {
     const sourceNode = nodes.find(n => n.id === e.source);
@@ -973,7 +993,8 @@ function BlueprintStudio() {
                               settings, 
                               appearance,
                               onEdit: setEditingNode,
-                              onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id))
+                              onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)),
+                              onDuplicate: handleDuplicateNode
                             }} 
                             type="blueprintNode"
                             dragging={false}

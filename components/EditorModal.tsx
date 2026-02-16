@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { X, Plus, Trash2, Tag as TagIcon, Database, MessageSquare, Key } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Plus, Trash2, Tag as TagIcon, Database, MessageSquare, Key, GripVertical } from 'lucide-react';
 import { Node } from 'reactflow';
 import { NodeData, NodeCardType, TableColumn, GlobalSettings, Tag } from '../types.ts';
 import { translations } from '../translations.ts';
@@ -31,6 +30,8 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
   const [dataSourceId, setDataSourceId] = useState(node.data.dataSourceId || '');
   const [assignedTags, setAssignedTags] = useState<string[]>(node.data.tags || []);
 
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
   const isTable = cardType === NodeCardType.TABLE;
   const isLogic = cardType === NodeCardType.LOGIC_NOTE;
 
@@ -41,6 +42,36 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
       prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
     );
   };
+
+  // Reordering Logic for Tables
+  const handleColumnDragStart = (idx: number) => setDraggedIndex(idx);
+  const handleColumnDragOver = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIdx) return;
+    
+    const newColumns = [...columns];
+    const item = newColumns.splice(draggedIndex, 1)[0];
+    newColumns.splice(targetIdx, 0, item);
+    
+    setColumns(newColumns);
+    setDraggedIndex(targetIdx);
+  };
+
+  // Reordering Logic for Bullet Points
+  const handleBulletDragStart = (idx: number) => setDraggedIndex(idx);
+  const handleBulletDragOver = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIdx) return;
+    
+    const newBullets = [...bulletPoints];
+    const item = newBullets.splice(draggedIndex, 1)[0];
+    newBullets.splice(targetIdx, 0, item);
+    
+    setBulletPoints(newBullets);
+    setDraggedIndex(targetIdx);
+  };
+
+  const handleDragEnd = () => setDraggedIndex(null);
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -126,10 +157,20 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {columns.map(col => (
-                    <div key={col.id} className="flex flex-wrap items-center gap-2 p-3 bg-slate-50/50 border border-slate-100 rounded-xl group transition-all hover:bg-white hover:shadow-sm">
+                  {columns.map((col, idx) => (
+                    <div 
+                      key={col.id} 
+                      draggable 
+                      onDragStart={() => handleColumnDragStart(idx)}
+                      onDragOver={(e) => handleColumnDragOver(e, idx)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex flex-wrap items-center gap-2 p-3 border rounded-xl group transition-all cursor-move ${draggedIndex === idx ? 'bg-blue-50 border-blue-200 opacity-50' : 'bg-slate-50/50 border-slate-100 hover:bg-white hover:shadow-sm'}`}
+                    >
+                      <div className="text-slate-300 group-hover:text-slate-500 transition-colors">
+                        <GripVertical size={16} />
+                      </div>
                       <div className="flex-1 min-w-[150px]">
-                        <input type="text" value={col.name} onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, name: e.target.value } : c))} className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold uppercase tracking-tight focus:ring-2 focus:ring-blue-500 outline-none" />
+                        <input type="text" value={col.name} onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, name: e.target.value } : c))} className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold tracking-tight focus:ring-2 focus:ring-blue-500 outline-none" />
                       </div>
                       <div className="w-32">
                         <select value={col.typeId || ''} onChange={e => setColumns(columns.map(c => c.id === col.id ? { ...c, typeId: e.target.value || undefined } : c))} className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold uppercase outline-none focus:ring-2 focus:ring-blue-500">
@@ -155,12 +196,24 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
               <div className="space-y-4">
                 <div><label className="block text-sm font-bold text-slate-700 mb-2">{t('internal_logic')}</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500" /></div>
                 <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700">{t('directives')}</span><button onClick={() => setBulletPoints([...bulletPoints, 'New Point'])} className="text-xs font-bold text-purple-600 flex items-center gap-1"><Plus size={14} /> {t('add_point')}</button></div>
-                {bulletPoints.map((p, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <input type="text" value={p} onChange={e => { const b = [...bulletPoints]; b[idx] = e.target.value; setBulletPoints(b); }} className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs" />
-                    <button onClick={() => setBulletPoints(bulletPoints.filter((_, i) => i !== idx))} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={14} /></button>
-                  </div>
-                ))}
+                <div className="space-y-2">
+                  {bulletPoints.map((p, idx) => (
+                    <div 
+                      key={idx} 
+                      draggable
+                      onDragStart={() => handleBulletDragStart(idx)}
+                      onDragOver={(e) => handleBulletDragOver(e, idx)}
+                      onDragEnd={handleDragEnd}
+                      className={`flex gap-2 items-center p-2 border rounded-xl transition-all cursor-move ${draggedIndex === idx ? 'bg-purple-50 border-purple-200 opacity-50' : 'bg-slate-50 border-slate-100 hover:bg-white'}`}
+                    >
+                      <div className="text-slate-300 group-hover:text-slate-500">
+                        <GripVertical size={14} />
+                      </div>
+                      <input type="text" value={p} onChange={e => { const b = [...bulletPoints]; b[idx] = e.target.value; setBulletPoints(b); }} className="flex-1 px-3 py-1.5 bg-transparent border-0 focus:ring-0 text-xs" />
+                      <button onClick={() => setBulletPoints(bulletPoints.filter((_, i) => i !== idx))} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={14} /></button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

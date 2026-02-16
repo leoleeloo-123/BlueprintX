@@ -1,4 +1,3 @@
-
 export enum NodeCardType {
   TABLE = 'TABLE',
   LOGIC_NOTE = 'LOGIC_NOTE',
@@ -84,6 +83,7 @@ export interface NodeData {
   tags?: string[]; 
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
   settings?: GlobalSettings;
   appearance?: AppearanceSettings;
   activeTableFilters?: string[];
