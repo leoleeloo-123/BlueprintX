@@ -1032,11 +1032,11 @@ function BlueprintStudio() {
                             selected={false}
                           />
                         </div>
-                        {/* Catalog Overlay Actions */}
-                        <div className="absolute top-2 right-20 flex gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
+                        {/* Catalog Overlay Actions - Scaled to match card's header icon */}
+                        <div className="absolute top-[12px] left-[12px] flex gap-1 animate-in fade-in slide-in-from-top-1 duration-300 z-50">
                           <button 
                             onClick={() => handleLocateOnCanvas(node.id)}
-                            className="p-2 bg-white/95 backdrop-blur-sm text-blue-600 rounded-lg shadow-lg border border-slate-100 hover:bg-blue-600 hover:text-white transition-all transform active:scale-90"
+                            className="p-1.5 bg-white text-blue-600 rounded shadow-sm border border-slate-200 hover:bg-blue-600 hover:text-white transition-all transform active:scale-90"
                             title={t('locate_on_canvas')}
                           >
                             <Crosshair size={14} strokeWidth={2.5} />
