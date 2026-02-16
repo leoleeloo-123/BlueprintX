@@ -73,6 +73,16 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
 
   const handleDragEnd = () => setDraggedIndex(null);
 
+  const handleAddField = () => {
+    const defaultType = settings.fieldTypes.find(ft => ft.name.toLowerCase() === 'text' || ft.id === 'ft-text') || settings.fieldTypes[0];
+    setColumns([...columns, { 
+      id: Date.now().toString(), 
+      name: 'New Field', 
+      isKey: false,
+      typeId: defaultType?.id 
+    }]);
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -152,9 +162,6 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-700">{t('fields_schema')}</span>
-                  <button onClick={() => setColumns([...columns, { id: Date.now().toString(), name: 'New Field', isKey: false }])} className="text-xs font-bold text-blue-600 flex items-center gap-1">
-                    <Plus size={14} /> {t('add_field')}
-                  </button>
                 </div>
                 <div className="space-y-3">
                   {columns.map((col, idx) => (
@@ -190,12 +197,21 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
                       <button onClick={() => setColumns(columns.filter(c => c.id !== col.id))} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
                     </div>
                   ))}
+                  
+                  {/* Add Field Button at the Bottom */}
+                  <button 
+                    onClick={handleAddField} 
+                    className="w-full py-3 flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-all group"
+                  >
+                    <Plus size={16} className="group-hover:scale-110 transition-transform" />
+                    {t('add_field')}
+                  </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <div><label className="block text-sm font-bold text-slate-700 mb-2">{t('internal_logic')}</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500" /></div>
-                <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700">{t('directives')}</span><button onClick={() => setBulletPoints([...bulletPoints, 'New Point'])} className="text-xs font-bold text-purple-600 flex items-center gap-1"><Plus size={14} /> {t('add_point')}</button></div>
+                <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700">{t('directives')}</span></div>
                 <div className="space-y-2">
                   {bulletPoints.map((p, idx) => (
                     <div 
@@ -213,6 +229,15 @@ export const EditorModal: React.FC<EditorModalProps> = ({ node, settings, onClos
                       <button onClick={() => setBulletPoints(bulletPoints.filter((_, i) => i !== idx))} className="p-2 text-slate-300 hover:text-red-500"><Trash2 size={14} /></button>
                     </div>
                   ))}
+                  
+                  {/* Add Point Button at the Bottom */}
+                  <button 
+                    onClick={() => setBulletPoints([...bulletPoints, 'New Point'])} 
+                    className="w-full py-3 flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-purple-600 hover:bg-purple-50 hover:border-purple-200 transition-all group"
+                  >
+                    <Plus size={16} className="group-hover:scale-110 transition-transform" />
+                    {t('add_point')}
+                  </button>
                 </div>
               </div>
             )}
