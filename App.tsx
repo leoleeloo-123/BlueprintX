@@ -136,6 +136,23 @@ function BlueprintStudio() {
 
   const t = (key: keyof typeof translations.en) => translations[appearance.language][key] || key;
 
+  const handleAutoAlign = useCallback(() => {
+    if (viewType !== 'canvas') setViewType('canvas');
+    setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 800 }), 50);
+  }, [fitView, viewType]);
+
+  // --- Automatic Alignment on Project Switch ---
+  useEffect(() => {
+    if (currentProjectId && !hasPerformedInitialFit.current && viewType === 'canvas') {
+      // Use a short delay to ensure React Flow has layouted the new set of nodes
+      const timer = setTimeout(() => {
+        handleAutoAlign();
+        hasPerformedInitialFit.current = true;
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentProjectId, handleAutoAlign, viewType]);
+
   // --- Initialization Logic ---
   useEffect(() => {
     const savedProjectsRaw = localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -192,7 +209,6 @@ function BlueprintStudio() {
       filters: { table: activeTableFilters, logic: activeLogicFilters, edge: activeEdgeFilters, tag: activeTagFilters }
     };
     const updatedMap = { ...projectDataMap, [currentProjectId]: projectData };
-    // Only update the map if something actually changed to avoid overhead
     localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify({ projects, currentProjectId, projectDataMap: updatedMap }));
   }, [nodes, edges, settings, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, projects, currentProjectId]);
 
@@ -204,18 +220,14 @@ function BlueprintStudio() {
   const switchProject = (id: string) => {
     if (!id || id === currentProjectId) return;
     
-    // 1. Snapshot current project data to the map
     const currentDataSnapshot = {
       nodes, edges, settings,
       filters: { table: activeTableFilters, logic: activeLogicFilters, edge: activeEdgeFilters, tag: activeTagFilters }
     };
     
     const updatedMap = { ...projectDataMap, [currentProjectId]: currentDataSnapshot };
-    
-    // 2. Look up the next project data
     const nextData = updatedMap[id];
     
-    // 3. Robust guard to prevent the "Cannot read properties of undefined (reading 'nodes')" error
     if (nextData) {
       setNodes(nextData.nodes || []);
       setEdges(nextData.edges || []);
@@ -225,7 +237,6 @@ function BlueprintStudio() {
       setActiveEdgeFilters(nextData.filters?.edge || []);
       setActiveTagFilters(nextData.filters?.tag || []);
     } else {
-      // Fallback if data is missing for some reason
       setNodes([]);
       setEdges([]);
       setSettings(DEFAULT_SETTINGS);
@@ -238,7 +249,7 @@ function BlueprintStudio() {
     setProjectDataMap(updatedMap);
     setCurrentProjectId(id);
     setOpenMenuType(null);
-    hasPerformedInitialFit.current = false;
+    hasPerformedInitialFit.current = false; // Trigger auto-align effect
   };
 
   const createNewProject = () => {
@@ -250,13 +261,10 @@ function BlueprintStudio() {
       settings: DEFAULT_SETTINGS,
       filters: { table: [], logic: [], edge: [], tag: [] }
     };
-    
-    // Add to projects list and data map
     setProjects(prev => [...prev, newProject]);
     setProjectDataMap(prev => ({ ...prev, [id]: newData }));
-    
-    // Switch to it
     switchProject(id);
+    hasPerformedInitialFit.current = false;
   };
 
   const deleteProject = (id: string) => {
@@ -294,7 +302,7 @@ function BlueprintStudio() {
     if (e.key === 'Escape') setEditingProjectId(null);
   };
 
-  // --- Existing Logic Updated for Projects ---
+  // --- Core Flow Callbacks ---
   const onNodesChange = useCallback((changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
   const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
   const onConnect = useCallback((params: Connection) => {
@@ -321,11 +329,6 @@ function BlueprintStudio() {
     setEdges((eds) => eds.map((edge) => edge.id === id ? { ...edge, label: data.label, data: { ...edge.data, typeId: data.typeId }, markerEnd: data.hasArrow ? { type: MarkerType.ArrowClosed, color: connType?.color || '#94a3b8' } : undefined } : edge));
     setEditingEdge(null);
   };
-
-  const handleAutoAlign = useCallback(() => {
-    if (viewType !== 'canvas') setViewType('canvas');
-    setTimeout(() => fitView({ padding: CANVAS_PADDING, duration: 800 }), 50);
-  }, [fitView, viewType]);
 
   const handleLocateOnCanvas = useCallback((nodeId: string) => {
     setViewType('canvas');
@@ -371,7 +374,6 @@ function BlueprintStudio() {
     const allTags: any[] = [];
     const allFilters: any[] = [];
 
-    // Collect data from all projects
     projects.forEach(p => {
       const data = p.id === currentProjectId 
         ? { nodes, edges, settings, filters: { table: activeTableFilters, logic: activeLogicFilters, edge: activeEdgeFilters, tag: activeTagFilters } } 
@@ -419,7 +421,7 @@ function BlueprintStudio() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(allFilters), "ActiveFilters");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([appearance]), "Appearance");
 
-    // Restored Professional Naming Convention: WhiteBox_{Org}_{User}_{DD-MM-YY}_{HHmm}.xlsx
+    // Restore Professional Naming Convention: WhiteBox_{Org}_{User}_{DD-MM-YY}_{HHmm}.xlsx
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -427,13 +429,11 @@ function BlueprintStudio() {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     
-    // Sanitize names to avoid invalid filename characters
     const sanitize = (str: string) => str.trim().replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
     const org = sanitize(appearance.organizationName || 'Studio');
     const user = sanitize(appearance.userName || 'User');
     
     const filename = `WhiteBox_${org}_${user}_${day}-${month}-${year}_${hours}${minutes}.xlsx`;
-    
     XLSX.writeFile(wb, filename);
     setOpenMenuType(null);
   };
@@ -504,7 +504,6 @@ function BlueprintStudio() {
         setProjects(importedProjects);
         setProjectDataMap(newMap);
         setCurrentProjectId(firstId);
-        
         setNodes(firstData.nodes || []);
         setEdges(firstData.edges || []);
         setSettings(firstData.settings || DEFAULT_SETTINGS);
@@ -513,6 +512,7 @@ function BlueprintStudio() {
         setActiveEdgeFilters(firstData.filters.edge || []);
         setActiveTagFilters(firstData.filters.tag || []);
         setOpenMenuType(null);
+        hasPerformedInitialFit.current = false;
       } catch (err) { alert("Invalid project file"); console.error(err); }
     };
     reader.readAsBinaryString(file);
@@ -633,7 +633,6 @@ function BlueprintStudio() {
 
             <div className="h-6 w-px bg-slate-200 mx-0.5 lg:mx-1 flex-shrink-0" />
 
-            {/* Create Node */}
             <div className="relative flex-shrink-0">
               <button onClick={() => setOpenMenuType(openMenuType === 'add' ? null : 'add')} className={`flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-blue-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all transform active:scale-95 group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 ${openMenuType === 'add' ? 'bg-slate-900' : ''}`}>
                 <Plus size={22} strokeWidth={2.5} className={`transition-transform duration-300 ${openMenuType === 'add' ? 'rotate-45' : ''}`} />
@@ -647,7 +646,6 @@ function BlueprintStudio() {
               )}
             </div>
 
-            {/* Import / Export */}
             <div className="relative flex-shrink-0">
               <button onClick={() => setOpenMenuType(openMenuType === 'io' ? null : 'io')} className={`flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-xl hover:bg-emerald-700 transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-emerald-500/30 active:scale-95 ${openMenuType === 'io' ? 'bg-slate-900 border-slate-700' : ''}`}>
                 <ArrowUpDown size={22} strokeWidth={2.5} />
@@ -669,7 +667,6 @@ function BlueprintStudio() {
             <button onClick={handleAutoAlign} className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl h-10 lg:h-12 border border-slate-700"><Maximize size={22} strokeWidth={2.5} /><div className="hidden 2xl:flex items-center pr-1"><span className="text-lg font-black text-white leading-none tracking-tight">{t('auto_align')}</span></div></button>
             <button onClick={() => { setActiveTableFilters([]); setActiveLogicFilters([]); setActiveEdgeFilters([]); setActiveTagFilters([]); setSearchQuery(''); }} className="flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-white/90 border border-slate-200 rounded-full h-10 lg:h-12"><div className="p-1.5 bg-rose-50 rounded-full text-rose-500"><RotateCcw size={16} strokeWidth={2.5} /></div><div className="flex flex-col items-start hidden 2xl:flex"><span className="text-[10px] font-black text-slate-400 uppercase leading-none">{t('filters_label')}</span><span className="text-xs font-bold text-slate-700">{t('reset_filters')}</span></div></button>
 
-            {/* Filter Dropdowns */}
             {['tag', 'table', 'logic', 'edge'].map((type: any) => (
               <div className="relative flex-shrink-0" key={type}>
                 <button onClick={() => setOpenMenuType(openMenuType === type ? null : type)} className="flex items-center justify-center gap-1.5 px-2 2xl:px-4 py-1.5 bg-white/90 border border-slate-200 rounded-full h-10 lg:h-12 relative">
