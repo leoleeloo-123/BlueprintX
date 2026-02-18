@@ -1,3 +1,4 @@
+
 export enum NodeCardType {
   TABLE = 'TABLE',
   LOGIC_NOTE = 'LOGIC_NOTE',
@@ -118,13 +119,26 @@ export interface GlobalSettings {
   tags: Tag[]; 
 }
 
-export interface BlueprintProject {
+export interface Project {
+  id: string;
+  name: string;
+}
+
+export interface ProjectData {
   nodes: any[];
   edges: any[];
   settings: GlobalSettings;
-  viewport: {
-    x: number;
-    y: number;
-    zoom: number;
+  filters: {
+    table: string[];
+    logic: string[];
+    edge: string[];
+    tag: string[];
   };
+}
+
+export interface BlueprintProject {
+  projects: Project[];
+  currentProjectId: string;
+  projectDataMap: Record<string, ProjectData>;
+  appearance: AppearanceSettings;
 }

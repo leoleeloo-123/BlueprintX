@@ -1,4 +1,5 @@
 
+
 export const translations = {
   en: {
     all: "All Categories",
@@ -9,8 +10,8 @@ export const translations = {
     configuration: "Configuration",
     global_config: "Global Config",
     auto_align: "Align",
-    general_setting: "General Setting",
-    export_project: "Export Project",
+    general_setting: "General",
+    export_project: "Export All Projects",
     import_xlsx: "Import .xlsx",
     workspace_legend: "Workspace Legend",
     table_categories: "Table Categories",
@@ -45,10 +46,10 @@ export const translations = {
     new_table_category: "New Table Category",
     new_logic_category: "New Logic Category",
     new_link_type: "New Link Type",
-    table_setting: "Table Setting",
-    logic_setting: "Logic Setting",
-    link_setting: "Link Setting",
-    tag_setting: "Tag Setting",
+    table_setting: "Table",
+    logic_setting: "Logic",
+    link_setting: "Link",
+    tag_setting: "Tag",
     apply_config: "Apply Config",
     weight: "Weight",
     style: "Style",
@@ -116,7 +117,11 @@ export const translations = {
     auto_fit: "Auto-Fit",
     generate_image: "Generate Image",
     download_ready: "Download Ready",
-    download: "Download"
+    download: "Download",
+    projects: "Projects",
+    switch_project: "Switch Project",
+    new_project: "New Project",
+    project_1: "Project 1"
   },
   zh: {
     all: "显示全部",
@@ -127,8 +132,8 @@ export const translations = {
     configuration: "配置管理",
     global_config: "全局配置",
     auto_align: "对齐",
-    general_setting: "通用设置",
-    export_project: "导出项目",
+    general_setting: "通用",
+    export_project: "导出所有项目",
     import_xlsx: "导入 Excel",
     workspace_legend: "图例说明",
     table_categories: "数据表类型",
@@ -163,10 +168,10 @@ export const translations = {
     new_table_category: "新数据表分类",
     new_logic_category: "新逻辑分类",
     new_link_type: "新连接类型",
-    table_setting: "数据表设置",
-    logic_setting: "逻辑设置",
-    link_setting: "连接线设置",
-    tag_setting: "标签设置",
+    table_setting: "数据表",
+    logic_setting: "逻辑",
+    link_setting: "连接线",
+    tag_setting: "标签",
     apply_config: "应用配置",
     weight: "线宽",
     style: "线型",
@@ -234,6 +239,10 @@ export const translations = {
     auto_fit: "自动适应",
     generate_image: "生成图片",
     download_ready: "图片已准备就绪",
-    download: "下载"
+    download: "下载",
+    projects: "项目管理",
+    switch_project: "切换项目",
+    new_project: "新建项目",
+    project_1: "项目 1"
   }
 };
