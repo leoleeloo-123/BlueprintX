@@ -307,23 +307,25 @@ function BlueprintStudio() {
     setNodes((nds) => {
       let updatedNodes = applyNodeChanges(changes, nds);
 
-      // 1. Handle container dragging
-      const positionChanges = changes.filter(c => c.type === 'position' && c.position) as any[];
+      // Detect nodes whose drag just ended in this change batch
+      const dragStopIds = new Set(
+        (changes as any[])
+          .filter(c => c.type === 'position' && c.dragging === false)
+          .map((c: any) => c.id)
+      );
+
+      // 1. Handle container dragging: move children with container
+      const positionChanges = changes.filter(c => c.type === 'position' && (c as any).position) as any[];
       positionChanges.forEach(pc => {
         const nodeBefore = nds.find(n => n.id === pc.id);
         const nodeAfter = updatedNodes.find(n => n.id === pc.id);
-        
         if (nodeBefore && nodeAfter && nodeAfter.data.cardType === NodeCardType.CONTAINER) {
           const dx = nodeAfter.position.x - nodeBefore.position.x;
           const dy = nodeAfter.position.y - nodeBefore.position.y;
-          
           if (dx !== 0 || dy !== 0) {
             updatedNodes = updatedNodes.map(n => {
               if (n.data.containerId === pc.id) {
-                return {
-                  ...n,
-                  position: { x: n.position.x + dx, y: n.position.y + dy }
-                };
+                return { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } };
               }
               return n;
             });
@@ -331,56 +333,113 @@ function BlueprintStudio() {
         }
       });
 
-      // 2. Auto-resize containers
+      const PADDING = 30;
+      const HEADER_H = 60;
+      const MIN_W = 300;
+      const MIN_H = 200;
+
+      // 2. Container exit detection:
+      //    For each container, compute "base bounds" from truly-settled children
+      //    (excludes currently-dragging AND just-stopped nodes).
+      //    Any active child (dragging or just-stopped) whose rect does NOT overlap
+      //    those base bounds is considered to have left the container.
+      const toRemoveFromContainer = new Set<string>();
+
+      updatedNodes
+        .filter(n => n.data.cardType === NodeCardType.CONTAINER)
+        .forEach(container => {
+          const allChildren = updatedNodes.filter(
+            c => c.data.containerId === container.id && c.data.cardType !== NodeCardType.CONTAINER
+          );
+          // Truly settled: not dragging and not just-stopped
+          const trueSettled = allChildren.filter(c => !c.dragging && !dragStopIds.has(c.id));
+          // Active (need overlap check): currently dragging OR just stopped
+          const activeChildren = allChildren.filter(c => c.dragging || dragStopIds.has(c.id));
+
+          if (activeChildren.length === 0) return;
+
+          // Base bounds: determined by truly settled siblings, or container's own bounds if none
+          let baseX: number, baseY: number, baseW: number, baseH: number;
+          if (trueSettled.length > 0) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            trueSettled.forEach(c => {
+              const w = c.width || 250; const h = c.height || 100;
+              if (c.position.x < minX) minX = c.position.x;
+              if (c.position.y < minY) minY = c.position.y;
+              if (c.position.x + w > maxX) maxX = c.position.x + w;
+              if (c.position.y + h > maxY) maxY = c.position.y + h;
+            });
+            baseX = minX - PADDING;
+            baseY = minY - HEADER_H - PADDING;
+            baseW = Math.max(MIN_W, maxX - minX + PADDING * 2);
+            baseH = Math.max(MIN_H, maxY - minY + PADDING * 2 + HEADER_H);
+          } else {
+            // Only active children remain — use container's stored position/size
+            baseX = container.position.x;
+            baseY = container.position.y;
+            baseW = (container.style?.width as number) || MIN_W;
+            baseH = (container.style?.height as number) || MIN_H;
+          }
+
+          // AABB overlap check: if no overlap → node has left the container
+          activeChildren.forEach(ac => {
+            const acW = ac.width || 250; const acH = ac.height || 100;
+            const overlaps =
+              ac.position.x < baseX + baseW && ac.position.x + acW > baseX &&
+              ac.position.y < baseY + baseH && ac.position.y + acH > baseY;
+            if (!overlaps) toRemoveFromContainer.add(ac.id);
+          });
+        });
+
+      // Apply exits
+      if (toRemoveFromContainer.size > 0) {
+        updatedNodes = updatedNodes.map(n =>
+          toRemoveFromContainer.has(n.id)
+            ? { ...n, data: { ...n.data, containerId: undefined } }
+            : n
+        );
+      }
+
+      // 3. Auto-resize containers based on children that are settled or just-dropped
       let needsResize = false;
       const resizedNodes = updatedNodes.map(n => {
-        if (n.data.cardType === NodeCardType.CONTAINER) {
-          const allChildren = updatedNodes.filter(child => child.data.containerId === n.id);
-          const settledChildren = allChildren.filter(child => !child.dragging);
-          
-          if (settledChildren.length > 0) {
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            settledChildren.forEach(c => {
-              const x = c.position.x;
-              const y = c.position.y;
-              const w = c.width || 250;
-              const h = c.height || 100;
-              if (x < minX) minX = x;
-              if (y < minY) minY = y;
-              if (x + w > maxX) maxX = x + w;
-              if (y + h > maxY) maxY = y + h;
-            });
-            const padding = 30;
-            const headerHeight = 60;
-            const newX = minX - padding;
-            const newY = minY - headerHeight - padding;
-            const newW = maxX - minX + padding * 2;
-            const newH = maxY - minY + padding * 2 + headerHeight;
-            
-            if (Math.abs(n.position.x - newX) > 1 || Math.abs(n.position.y - newY) > 1 || n.style?.width !== newW || n.style?.height !== newH) {
-              needsResize = true;
-              return {
-                ...n,
-                position: { x: newX, y: newY },
-                style: { ...n.style, width: newW, height: newH }
-              };
-            }
-          } else {
-            const minW = 300;
-            const minH = 200;
-            if (n.style?.width !== minW || n.style?.height !== minH) {
-              needsResize = true;
-              return {
-                ...n,
-                style: { ...n.style, width: minW, height: minH }
-              };
-            }
+        if (n.data.cardType !== NodeCardType.CONTAINER) return n;
+
+        const allChildren = updatedNodes.filter(child => child.data.containerId === n.id);
+        // Include settled + just-stopped survivors; exclude mid-drag children
+        const childrenForResize = allChildren.filter(
+          child => !child.dragging || dragStopIds.has(child.id)
+        );
+
+        if (childrenForResize.length > 0) {
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          childrenForResize.forEach(c => {
+            const w = c.width || 250; const h = c.height || 100;
+            if (c.position.x < minX) minX = c.position.x;
+            if (c.position.y < minY) minY = c.position.y;
+            if (c.position.x + w > maxX) maxX = c.position.x + w;
+            if (c.position.y + h > maxY) maxY = c.position.y + h;
+          });
+          const newX = minX - PADDING;
+          const newY = minY - HEADER_H - PADDING;
+          const newW = Math.max(MIN_W, maxX - minX + PADDING * 2);
+          const newH = Math.max(MIN_H, maxY - minY + PADDING * 2 + HEADER_H);
+          if (Math.abs(n.position.x - newX) > 1 || Math.abs(n.position.y - newY) > 1 ||
+              n.style?.width !== newW || n.style?.height !== newH) {
+            needsResize = true;
+            return { ...n, position: { x: newX, y: newY }, style: { ...n.style, width: newW, height: newH } };
+          }
+        } else {
+          // No settled/stopped children — reset to min size
+          if (n.style?.width !== MIN_W || n.style?.height !== MIN_H) {
+            needsResize = true;
+            return { ...n, style: { ...n.style, width: MIN_W, height: MIN_H } };
           }
         }
         return n;
       });
 
-      return needsResize ? resizedNodes : updatedNodes;
+      return (needsResize || toRemoveFromContainer.size > 0) ? resizedNodes : updatedNodes;
     });
   }, []);
   const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
@@ -389,35 +448,37 @@ function BlueprintStudio() {
     setEdges((eds) => addEdge({ ...params, type: 'blueprintEdge', data: { typeId: defaultType.id }, markerEnd: { type: MarkerType.ArrowClosed, color: defaultType.color } }, eds));
   }, [settings]);
 
+  // On drag stop: only handle JOIN (a node dropped onto a new container).
+  // EXIT is handled in onNodesChange via dragStopIds to avoid the race condition
+  // where the container would expand before the exit check runs.
   const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
     if (node.data.cardType === NodeCardType.CONTAINER) return;
 
     setNodes(nds => {
-      const nodeCenterX = node.position.x + (node.width || 250) / 2;
-      const nodeCenterY = node.position.y + (node.height || 100) / 2;
+      const nodeX = node.position.x;
+      const nodeY = node.position.y;
+      const nodeW = node.width || 250;
+      const nodeH = node.height || 100;
 
       const containers = nds.filter(n => n.data.cardType === NodeCardType.CONTAINER);
-      
-      let targetContainerId = undefined;
+
+      // Use rect-based overlap (not center) consistent with exit logic
+      let targetContainerId: string | undefined = undefined;
       for (const container of containers) {
         const cx = container.position.x;
         const cy = container.position.y;
-        const cw = container.style?.width as number || 300;
-        const ch = container.style?.height as number || 200;
-        
-        if (nodeCenterX >= cx && nodeCenterX <= cx + cw && nodeCenterY >= cy && nodeCenterY <= cy + ch) {
-          targetContainerId = container.id;
-          break;
-        }
+        const cw = (container.style?.width as number) || 300;
+        const ch = (container.style?.height as number) || 200;
+        const overlaps =
+          nodeX < cx + cw && nodeX + nodeW > cx &&
+          nodeY < cy + ch && nodeY + nodeH > cy;
+        if (overlaps) { targetContainerId = container.id; break; }
       }
 
       if (node.data.containerId !== targetContainerId) {
-        return nds.map(n => {
-          if (n.id === node.id) {
-            return { ...n, data: { ...n.data, containerId: targetContainerId } };
-          }
-          return n;
-        });
+        return nds.map(n =>
+          n.id === node.id ? { ...n, data: { ...n.data, containerId: targetContainerId } } : n
+        );
       }
       return nds;
     });
