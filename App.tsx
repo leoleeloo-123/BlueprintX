@@ -1,11 +1,11 @@
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import ReactFlow, { 
-  Background, 
+import ReactFlow, {
+  Background,
   BackgroundVariant,
-  Controls, 
-  addEdge, 
-  applyEdgeChanges, 
+  Controls,
+  addEdge,
+  applyEdgeChanges,
   applyNodeChanges,
   Node,
   Edge,
@@ -109,7 +109,7 @@ function BlueprintStudio() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string>('');
   const [projectDataMap, setProjectDataMap] = useState<Record<string, ProjectData>>({});
-  
+
   // --- Project Renaming State ---
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [tempProjectName, setTempProjectName] = useState('');
@@ -170,7 +170,7 @@ function BlueprintStudio() {
         setProjects(loadedProjects);
         setProjectDataMap(loadedDataMap);
         setCurrentProjectId(loadedCurrentId);
-        
+
         if (loadedCurrentId && loadedDataMap[loadedCurrentId]) {
           const data = loadedDataMap[loadedCurrentId];
           setNodes(data.nodes || []);
@@ -219,15 +219,15 @@ function BlueprintStudio() {
   // --- Project Management Functions ---
   const switchProject = (id: string) => {
     if (!id || id === currentProjectId) return;
-    
+
     const currentDataSnapshot = {
       nodes, edges, settings,
       filters: { table: activeTableFilters, logic: activeLogicFilters, edge: activeEdgeFilters, tag: activeTagFilters }
     };
-    
+
     const updatedMap = { ...projectDataMap, [currentProjectId]: currentDataSnapshot };
     const nextData = updatedMap[id];
-    
+
     if (nextData) {
       setNodes(nextData.nodes || []);
       setEdges(nextData.edges || []);
@@ -245,7 +245,7 @@ function BlueprintStudio() {
       setActiveEdgeFilters([]);
       setActiveTagFilters([]);
     }
-    
+
     setProjectDataMap(updatedMap);
     setCurrentProjectId(id);
     setOpenMenuType(null);
@@ -425,7 +425,7 @@ function BlueprintStudio() {
           const newW = Math.max(MIN_W, maxX - minX + PADDING * 2);
           const newH = Math.max(MIN_H, maxY - minY + PADDING * 2 + HEADER_H);
           if (Math.abs(n.position.x - newX) > 1 || Math.abs(n.position.y - newY) > 1 ||
-              n.style?.width !== newW || n.style?.height !== newH) {
+            n.style?.width !== newW || n.style?.height !== newH) {
             needsResize = true;
             return { ...n, position: { x: newX, y: newY }, style: { ...n.style, width: newW, height: newH } };
           }
@@ -525,10 +525,10 @@ function BlueprintStudio() {
 
   const addNode = (type: NodeCardType) => {
     const id = Date.now().toString();
-    const defaultCatId = type === NodeCardType.TABLE 
+    const defaultCatId = type === NodeCardType.TABLE
       ? (settings.tableCategories.find(c => c.isDefault) || settings.tableCategories[0]).id
       : (settings.logicCategories.find(c => c.isDefault) || settings.logicCategories[0]).id;
-    
+
     const newNode: any = {
       id, type: 'blueprintNode', position: { x: 100, y: 100 },
       data: { label: `New ${type.toLowerCase()}`, cardType: type, categoryId: defaultCatId, columns: type === NodeCardType.TABLE ? [{ id: '1', name: 'New Field', isKey: false }] : [], description: '', bulletPoints: [], comment: '', dataSourceId: '', tags: [] }
@@ -557,14 +557,14 @@ function BlueprintStudio() {
     const allFilters: any[] = [];
 
     projects.forEach(p => {
-      const data = p.id === currentProjectId 
-        ? { nodes, edges, settings, filters: { table: activeTableFilters, logic: activeLogicFilters, edge: activeEdgeFilters, tag: activeTagFilters } } 
+      const data = p.id === currentProjectId
+        ? { nodes, edges, settings, filters: { table: activeTableFilters, logic: activeLogicFilters, edge: activeEdgeFilters, tag: activeTagFilters } }
         : projectDataMap[p.id];
-      
+
       if (!data) return;
 
-      allNodes.push(...data.nodes.map(n => ({ 
-        ProjectID: p.id, ID: n.id, Label: n.data.label, Type: n.data.cardType, CatID: n.data.categoryId || '', X: n.position.x, Y: n.position.y, 
+      allNodes.push(...data.nodes.map(n => ({
+        ProjectID: p.id, ID: n.id, Label: n.data.label, Type: n.data.cardType, CatID: n.data.categoryId || '', X: n.position.x, Y: n.position.y,
         Columns: n.data.columns?.map(c => `${c.name}:${c.typeId || ''}:${c.isKey ? 'K' : ''}`).join('|') || '',
         Desc: n.data.description || '', Bullets: n.data.bulletPoints?.join('|') || '', Comment: n.data.comment || '', DataSourceID: n.data.dataSourceId || '',
         Tags: n.data.tags?.join('|') || '',
@@ -583,7 +583,7 @@ function BlueprintStudio() {
       allDataSources.push(...data.settings.dataSources.map(s => ({ ...s, ProjectID: p.id })));
       allFieldTypes.push(...data.settings.fieldTypes.map(f => ({ ...f, ProjectID: p.id })));
       allTags.push(...(data.settings.tags || []).map(t => ({ ...t, ProjectID: p.id })));
-      
+
       allFilters.push({
         ProjectID: p.id,
         TableFilters: (data.filters?.table || []).join('|'),
@@ -612,11 +612,11 @@ function BlueprintStudio() {
     const year = String(now.getFullYear()).slice(-2);
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    
+
     const sanitize = (str: string) => str.trim().replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
     const org = sanitize(appearance.organizationName || 'Studio');
     const user = sanitize(appearance.userName || 'User');
-    
+
     const filename = `WhiteBox_${org}_${user}_${day}-${month}-${year}_${hours}${minutes}.xlsx`;
     XLSX.writeFile(wb, filename);
     setOpenMenuType(null);
@@ -630,7 +630,7 @@ function BlueprintStudio() {
       try {
         const workbook = XLSX.read(evt.target?.result, { type: 'binary' });
         const importedProjects = (XLSX.utils.sheet_to_json(workbook.Sheets["Projects"]) || []) as Project[];
-        
+
         if (importedProjects.length === 0) {
           alert("No projects found in the file.");
           return;
@@ -645,7 +645,7 @@ function BlueprintStudio() {
         const fieldTypesRaw = XLSX.utils.sheet_to_json(workbook.Sheets["FieldTypes"]) as any[];
         const tagsRaw = XLSX.utils.sheet_to_json(workbook.Sheets["Tags"]) as any[];
         const filtersRaw = XLSX.utils.sheet_to_json(workbook.Sheets["ActiveFilters"]) as any[];
-        
+
         const appearanceRaw = workbook.Sheets["Appearance"] ? XLSX.utils.sheet_to_json(workbook.Sheets["Appearance"])[0] as any : null;
         if (appearanceRaw) setAppearance({ ...DEFAULT_APPEARANCE, ...appearanceRaw });
 
@@ -659,9 +659,9 @@ function BlueprintStudio() {
                 id: String(n.ID), type: 'blueprintNode', position: { x: Number(n.X), y: Number(n.Y) },
                 zIndex: isContainer ? -1 : 0,
                 style: isContainer ? { width: 300, height: 200 } : undefined,
-                data: { 
-                  label: n.Label, cardType: n.Type, categoryId: n.CatID, 
-                  columns: n.Columns ? n.Columns.split('|').map((colStr: string, i: number) => { const [name, typeId, key] = colStr.split(':'); return { id: String(i), name, typeId: typeId || undefined, isKey: key === 'K' }; }) : [], 
+                data: {
+                  label: n.Label, cardType: n.Type, categoryId: n.CatID,
+                  columns: n.Columns ? n.Columns.split('|').map((colStr: string, i: number) => { const [name, typeId, key] = colStr.split(':'); return { id: String(i), name, typeId: typeId || undefined, isKey: key === 'K' }; }) : [],
                   description: n.Desc, bulletPoints: n.Bullets ? n.Bullets.split('|') : [], comment: n.Comment || '', dataSourceId: n.DataSourceID || '', tags: n.Tags ? n.Tags.split('|') : [],
                   containerId: n.ContainerID || undefined,
                   containerStyle: n.ContainerStyle ? JSON.parse(n.ContainerStyle) : undefined
@@ -736,7 +736,7 @@ function BlueprintStudio() {
   }, [activeTableFilters, activeLogicFilters, activeTagFilters, searchQuery]);
 
   const filteredNodes = useMemo(() => nodes.filter(isNodeVisible), [nodes, isNodeVisible]);
-  const nodesWithActions = useMemo(() => filteredNodes.map(n => ({ ...n, data: { ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), onDuplicate: handleDuplicateNode, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, highlightedNodeId } })), [filteredNodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, handleDuplicateNode, highlightedNodeId]);
+  const nodesWithActions = useMemo(() => filteredNodes.map(n => ({ ...n, hidden: false, data: { ...n.data, onEdit: setEditingNode, onDelete: (id: string) => setNodes(nds => nds.filter(node => node.id !== id)), onDuplicate: handleDuplicateNode, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, highlightedNodeId } })), [filteredNodes, settings, appearance, activeTableFilters, activeLogicFilters, activeEdgeFilters, activeTagFilters, handleDuplicateNode, highlightedNodeId]);
   const edgesWithActions = useMemo(() => edges.map(e => {
     const sourceNode = nodes.find(n => n.id === e.source);
     const targetNode = nodes.find(n => n.id === e.target);
@@ -760,15 +760,15 @@ function BlueprintStudio() {
           <div className="flex items-center gap-1.5 lg:gap-2 2xl:gap-3 pointer-events-auto flex-nowrap min-w-0">
             {/* Project Switcher */}
             <div className="relative flex-shrink-0">
-              <button 
-                onClick={() => setOpenMenuType(openMenuType === 'project' ? null : 'project')} 
+              <button
+                onClick={() => setOpenMenuType(openMenuType === 'project' ? null : 'project')}
                 className={`flex items-center justify-center gap-3 px-2 2xl:px-4 py-1.5 lg:py-2 bg-slate-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all group h-10 lg:h-12 2xl:w-auto aspect-square 2xl:aspect-auto flex-shrink-0 border border-slate-700 ring-2 ring-transparent active:scale-95 ${openMenuType === 'project' ? 'bg-slate-700' : ''}`}
                 title={t('projects')}
               >
                 <Layers size={22} strokeWidth={2.5} className="flex-shrink-0" />
                 <div className="hidden 2xl:flex flex-col items-start pr-1">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('projects')}</span>
-                   <span className="text-xs font-bold text-white truncate max-w-[120px]">{currentProject?.name || t('none')}</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{t('projects')}</span>
+                  <span className="text-xs font-bold text-white truncate max-w-[120px]">{currentProject?.name || t('none')}</span>
                 </div>
                 <ChevronDown size={14} className={`text-slate-400 transition-transform ${openMenuType === 'project' ? 'rotate-180' : ''} hidden 2xl:block`} />
               </button>
@@ -779,40 +779,40 @@ function BlueprintStudio() {
                     <div key={p.id} className="group relative">
                       <button onClick={() => switchProject(p.id)} className={`w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors ${currentProjectId === p.id ? 'bg-indigo-50 text-indigo-600' : ''}`}>
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                           <LayoutList size={14} className={currentProjectId === p.id ? 'text-indigo-600' : 'text-slate-400'} />
-                           {editingProjectId === p.id ? (
-                             <input
-                               autoFocus
-                               type="text"
-                               value={tempProjectName}
-                               onChange={(e) => setTempProjectName(e.target.value)}
-                               onBlur={handleRenameSave}
-                               onKeyDown={handleRenameKeyDown}
-                               onClick={(e) => e.stopPropagation()}
-                               className="flex-1 bg-white border border-blue-500 rounded px-2 py-0.5 outline-none text-slate-900 font-bold"
-                             />
-                           ) : (
-                             <span className="truncate">{p.name}</span>
-                           )}
+                          <LayoutList size={14} className={currentProjectId === p.id ? 'text-indigo-600' : 'text-slate-400'} />
+                          {editingProjectId === p.id ? (
+                            <input
+                              autoFocus
+                              type="text"
+                              value={tempProjectName}
+                              onChange={(e) => setTempProjectName(e.target.value)}
+                              onBlur={handleRenameSave}
+                              onKeyDown={handleRenameKeyDown}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-1 bg-white border border-blue-500 rounded px-2 py-0.5 outline-none text-slate-900 font-bold"
+                            />
+                          ) : (
+                            <span className="truncate">{p.name}</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0 ml-2">
-                           {currentProjectId === p.id && editingProjectId !== p.id && <Check size={14} className="text-indigo-600" />}
-                           {editingProjectId !== p.id && (
-                             <button 
-                               onClick={(e) => startRenaming(e, p)}
-                               className="p-1.5 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 transition-all"
-                             >
-                               <Edit3 size={14} />
-                             </button>
-                           )}
-                           {projects.length > 1 && editingProjectId !== p.id && (
-                             <button 
-                               onClick={(e) => { e.stopPropagation(); deleteProject(p.id); }} 
-                               className="p-1.5 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"
-                             >
-                               <Trash2 size={14} />
-                             </button>
-                           )}
+                          {currentProjectId === p.id && editingProjectId !== p.id && <Check size={14} className="text-indigo-600" />}
+                          {editingProjectId !== p.id && (
+                            <button
+                              onClick={(e) => startRenaming(e, p)}
+                              className="p-1.5 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-blue-600 transition-all"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                          )}
+                          {projects.length > 1 && editingProjectId !== p.id && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteProject(p.id); }}
+                              className="p-1.5 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </button>
                     </div>
@@ -899,7 +899,7 @@ function BlueprintStudio() {
 
         {viewType === 'canvas' ? (
           <>
-            <ReactFlow nodes={nodesWithActions} edges={edgesWithActions} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeDragStop={onNodeDragStop} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView fitViewOptions={{ padding: CANVAS_PADDING }} minZoom={0.05} maxZoom={4} onPaneClick={() => setOpenMenuType(null)} onMoveStart={() => setOpenMenuType(null)} className="bg-transparent"><Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} /><Controls position="bottom-left" /></ReactFlow>
+            <ReactFlow nodes={nodesWithActions} edges={edgesWithActions} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeDragStop={onNodeDragStop} onNodeClick={() => { }} onNodeDragStart={() => { }} nodeTypes={nodeTypes} edgeTypes={edgeTypes} fitView fitViewOptions={{ padding: CANVAS_PADDING }} minZoom={0.05} maxZoom={4} onPaneClick={() => setOpenMenuType(null)} onMoveStart={() => setOpenMenuType(null)} className="bg-transparent"><Background color="#cbd5e1" variant={BackgroundVariant.Dots} gap={24} size={1} /><Controls position="bottom-left" /></ReactFlow>
             <Legend settings={settings} appearance={appearance} onUpdateAppearance={setAppearance} />
           </>
         ) : (
